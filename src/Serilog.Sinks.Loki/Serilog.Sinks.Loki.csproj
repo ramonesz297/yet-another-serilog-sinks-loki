@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<AssemblyName>Serilog.Sinks.Loki</AssemblyName>
+		<TargetFrameworks>net6.0;net8.0;</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<PackageId>Serilog.Sinks.Loki.YetAnother</PackageId>
+		<PackageTags>serilog;loki;grafana;net8;</PackageTags>
+		<DebugType>embedded</DebugType>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<RepositoryUrl>https://github.com/ramonesz297/yet-another-serilog-sinks-loki</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/ramonesz297/yet-another-serilog-sinks-loki</PackageProjectUrl>
+		<Description>A Serilog sink for Grafana Loki. Optimized to use less memory\CPU then other implementations.</Description>
+	</PropertyGroup>
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>$(AssemblyName).Tests</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Serilog" Version="3.1.1" />
+		<PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="3.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\LICENSE" Pack="true" Visible="false" PackagePath="" />
+		<None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="" />
+		<None Include="..\..\assets\logo_128_128.png" Pack="true" Visible="false" PackagePath="" />
+	</ItemGroup>
+
+</Project>
