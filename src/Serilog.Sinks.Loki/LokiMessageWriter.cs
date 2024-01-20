@@ -131,7 +131,7 @@ namespace Serilog.Sinks.Loki
 
 
         }
-        
+
         private bool WriteScalarPropertyName(Utf8JsonWriter writer, ScalarValue scalarValue)
         {
             if (scalarValue.Value is null)
@@ -220,7 +220,7 @@ namespace Serilog.Sinks.Loki
             {
                 writer.WriteNumberValue(intValue);
             }
-            if (scalarValue.Value is uint uintValue)
+            else if (scalarValue.Value is uint uintValue)
             {
                 writer.WriteNumberValue(uintValue);
             }
