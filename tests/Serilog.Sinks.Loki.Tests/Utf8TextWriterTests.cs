@@ -71,7 +71,6 @@ namespace Serilog.Sinks.Loki.Tests
 
         [Theory]
         [InlineData(0)]
-        [InlineData(-1)]
         [InlineData(ulong.MaxValue)]
         public void Should_write_ulong(ulong value)
         {
