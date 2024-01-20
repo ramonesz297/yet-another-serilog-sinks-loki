@@ -47,8 +47,8 @@ namespace Serilog.Sinks.Loki.Tests
 
 
         [Theory]
-        [InlineData(0)]
-        [InlineData(-1)]
+        [InlineData(0u)]
+        [InlineData(1u)]
         [InlineData(uint.MaxValue)]
         public void Should_write_uint(uint value)
         {
