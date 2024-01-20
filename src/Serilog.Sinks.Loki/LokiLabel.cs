@@ -27,38 +27,38 @@
             Key = key;
             Value = value;
         }
-
+        /// <inheritdoc/>
         public bool Equals(LokiLabel x, LokiLabel y)
         {
             return x.Equals(y);
         }
-
+        /// <inheritdoc/>
         public int GetHashCode(LokiLabel obj)
         {
             return obj.GetHashCode();
         }
-
+        /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return obj is LokiLabel label && Equals(label);
         }
-
+        /// <inheritdoc/>
         public bool Equals(LokiLabel other)
         {
             return Key == other.Key &&
                    Value == other.Value;
         }
-
+        /// <inheritdoc/>
         public static bool operator ==(LokiLabel left, LokiLabel right)
         {
             return left.Equals(right);
         }
-
+        /// <inheritdoc/>
         public static bool operator !=(LokiLabel left, LokiLabel right)
         {
             return !(left == right);
         }
-
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             return HashCode.Combine(Key, Value);

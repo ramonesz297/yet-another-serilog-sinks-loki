@@ -167,8 +167,9 @@ namespace Serilog.Sinks.Loki
         {
             if (disposing)
             {
-                Flush();
+                _index = 0;
                 _buffer = default;
+                _pooledByteBufferWriter.Dispose();
             }
         }
 

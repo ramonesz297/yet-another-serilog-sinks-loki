@@ -1,4 +1,5 @@
 ﻿using Serilog.Events;
+using System.Text;
 using System.Text.Json;
 
 namespace Serilog.Sinks.Loki
@@ -8,11 +9,11 @@ namespace Serilog.Sinks.Loki
         private readonly LokiSinkConfigurations _configurations;
         private readonly LokiLogEventComparer _comparer;
         private readonly PooledTextWriterAndByteBufferWriterOwner _bufferOwner;
-        internal LokiMessageWriter(LokiSinkConfigurations configurations, LokiLogEventComparer comparer)
+        internal LokiMessageWriter(LokiSinkConfigurations configurations, PooledTextWriterAndByteBufferWriterOwner bufferOwner, LokiLogEventComparer comparer)
         {
             _configurations = configurations;
             _comparer = comparer;
-            _bufferOwner = PooledTextWriterAndByteBufferWriterOwner.Instance;
+            _bufferOwner = bufferOwner;
         }
 
         private static ReadOnlySpan<byte> MapLogLevel(LogEventLevel logLevel)
@@ -49,7 +50,7 @@ namespace Serilog.Sinks.Loki
             writer.WritePropertyName("stream"u8);
             writer.WriteStartObject();
 
-            if (_configurations.ExposeLogLevelAsLabel)
+            if (_configurations.HandleLogLevelAsLabel)
             {
                 writer.WritePropertyName("level"u8);
                 writer.WriteStringValue(MapLogLevel(head.Level));
@@ -58,24 +59,64 @@ namespace Serilog.Sinks.Loki
             for (int i = 0; i < _configurations.Labels.Length; i++)
             {
                 var label = _configurations.Labels[i];
+
+                if (label.Key == "level" && _configurations.HandleLogLevelAsLabel)
+                {
+                    continue;
+                }
+
                 writer.WriteString(label.Key, label.Value);
             }
 
             for (int i = 0; i < _configurations.PropertiesAsLabels.Length; i++)
             {
                 var label = _configurations.PropertiesAsLabels[i];
+
                 if (head.Properties.TryGetValue(label, out var value))
                 {
                     if (value is ScalarValue scalarValue && scalarValue.Value != null)
                     {
-                        writer.WritePropertyName(label);
+                        //if user want to expose log level as label and there are property with same name
+                        //then we need to rename property name
+                        if (label == "level" && _configurations.HandleLogLevelAsLabel)
+                        {
+                            writer.WritePropertyName("_level"u8);
+                        }
+                        //if user already declared the same property as lable in global labels and in properties as labels
+                        //then we need to rename property name
+                        else if (Array.Exists(_configurations.Labels, x => x.Key == label))
+                        {
+                            WriteMaskedPropertyName(writer, label);
+                        }
+                        else
+                        {
+                            writer.WritePropertyName(label);
+                        }
+
                         WriteScalarValue(writer, scalarValue);
                     }
                 }
             }
 
             writer.WriteEndObject();
+
+            static void WriteMaskedPropertyName(Utf8JsonWriter writer, string propertyName)
+            {
+                //use stackallok only for small strings
+                if (propertyName.Length < 256)
+                {
+                    Span<char> chars = stackalloc char[propertyName.Length + 1];
+                    chars[0] = '_';
+                    propertyName.CopyTo(chars.Slice(1));
+                    writer.WritePropertyName(chars);
+                }
+                else
+                {
+                    writer.WritePropertyName($"_{propertyName}");
+                }
+            }
         }
+
         private void WriteLogMessageStringValue(Utf8JsonWriter writer, LogEvent logEvent)
         {
             var tw = _bufferOwner.RentWriter();
@@ -90,7 +131,7 @@ namespace Serilog.Sinks.Loki
 
 
         }
-
+        
         private bool WriteScalarPropertyName(Utf8JsonWriter writer, ScalarValue scalarValue)
         {
             if (scalarValue.Value is null)
@@ -167,7 +208,7 @@ namespace Serilog.Sinks.Loki
 
             return true;
         }
-        private void WriteScalarValue(Utf8JsonWriter writer, ScalarValue scalarValue)
+        private static void WriteScalarValue(Utf8JsonWriter writer, ScalarValue scalarValue)
         {
             if (scalarValue.Value is null)
             {
@@ -178,6 +219,10 @@ namespace Serilog.Sinks.Loki
             if (scalarValue.Value is int intValue)
             {
                 writer.WriteNumberValue(intValue);
+            }
+            if (scalarValue.Value is uint uintValue)
+            {
+                writer.WriteNumberValue(uintValue);
             }
             else if (scalarValue.Value is string stringValue)
             {
@@ -194,6 +239,10 @@ namespace Serilog.Sinks.Loki
             else if (scalarValue.Value is long longValue)
             {
                 writer.WriteNumberValue(longValue);
+            }
+            else if (scalarValue.Value is ulong ulongValue)
+            {
+                writer.WriteNumberValue(ulongValue);
             }
             else if (scalarValue.Value is DateTime dateTimeValue)
             {
@@ -285,8 +334,8 @@ namespace Serilog.Sinks.Loki
             }
         }
 
-        
-        private void WriteException(Utf8JsonWriter writer, Exception exception)
+
+        private static void WriteException(Utf8JsonWriter writer, Exception exception)
         {
             if (exception is null)
             {

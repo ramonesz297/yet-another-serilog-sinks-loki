@@ -23,7 +23,8 @@
         public LokiCredentials? Credentials { get; set; }
 
         /// <summary>
-        /// Log event properties to be added as labels
+        /// Log event properties to be added as labels.
+        /// Property matching are case sensetive.
         /// </summary>
         public string[] PropertiesAsLabels { get; set; } = [];
 
@@ -31,7 +32,7 @@
         /// When <see langword="true"/> then <see cref="Serilog.Events.LogEvent.Level"/> will be added as label.
         /// Default is <see langword="true"/>
         /// </summary>
-        public bool ExposeLogLevelAsLabel { get; set; } = true;
+        public bool HandleLogLevelAsLabel { get; set; } = true;
 
         /// <summary>
         /// Loki tenant name. When provided <code>X-Scope-OrgID</code> header will be added to each request

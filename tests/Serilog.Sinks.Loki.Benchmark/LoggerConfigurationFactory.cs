@@ -1,4 +1,5 @@
 ﻿using Serilog.Sinks.Grafana.Loki;
+using System.Net.Http;
 using GrafanaLokiLabel = Serilog.Sinks.Grafana.Loki.LokiLabel;
 
 namespace Serilog.Sinks.Loki.Benchmark
@@ -18,7 +19,7 @@ namespace Serilog.Sinks.Loki.Benchmark
                 {
                     Login = Environment.GetEnvironmentVariable("LokiLogin")!,
                     Password = Environment.GetEnvironmentVariable("LokiPassword")!
-                });
+                }, period: TimeSpan.FromMilliseconds(100), batchPostingLimit: 300, propertiesAsLabels: ["level"]);
         }
 
         public static LoggerConfiguration Optimized()
@@ -29,12 +30,12 @@ namespace Serilog.Sinks.Loki.Benchmark
                 {
                     Credentials = new LokiCredentials(Environment.GetEnvironmentVariable("LokiLogin")!, Environment.GetEnvironmentVariable("LokiPassword")),
                     Url = new Uri(Environment.GetEnvironmentVariable("LokiUrl")!),
-                    ExposeLogLevelAsLabel = true,
+                    HandleLogLevelAsLabel = true,
                     Labels =
                     [
                         new LokiLabel("app", "sinks2"),
                     ],
-                });
+                }, period: TimeSpan.FromMilliseconds(100), batchSizeLimit: 300);
         }
     }
 

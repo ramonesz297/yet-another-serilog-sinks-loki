@@ -8,30 +8,30 @@ namespace Serilog.Sinks.Loki
         private readonly LokiSinkConfigurations _configurations;
         private readonly LokiLogEventComparer _comparer;
         private readonly LokiMessageWriter _lokiMessageWriter;
-
         private readonly HttpClient _httpClient;
         private readonly Uri _requestUri;
+        private readonly PooledTextWriterAndByteBufferWriterOwner _bufferWriterOwner;
         internal LokiSink(LokiSinkConfigurations configurations, HttpClient httpClient)
         {
             _configurations = configurations;
             _comparer = new LokiLogEventComparer(_configurations);
-            _lokiMessageWriter = new LokiMessageWriter(_configurations, _comparer);
+            _bufferWriterOwner = new PooledTextWriterAndByteBufferWriterOwner();
+            _lokiMessageWriter = new LokiMessageWriter(_configurations, _bufferWriterOwner, _comparer);
             _httpClient = httpClient;
             _httpClient.BaseAddress = configurations.Url;
             _httpClient.SetCredentials(configurations.Credentials);
             _httpClient.SetTenant(configurations.Tenant);
-
             _requestUri = new Uri(configurations.Url, "/loki/api/v1/push");
         }
 
 
         public Task EmitBatchAsync(IEnumerable<LogEvent> batch)
         {
-            var content = LokiPushContent.Create(_lokiMessageWriter, batch);
+            var content = LokiPushContent.Create(_lokiMessageWriter, _bufferWriterOwner, batch);
 
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, _requestUri)
             {
-                Content = content
+                Content = content,
             };
 
             return _httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead);
@@ -45,6 +45,7 @@ namespace Serilog.Sinks.Loki
         public void Dispose()
         {
             _httpClient.Dispose();
+            _bufferWriterOwner.Dispose();
             GC.SuppressFinalize(this);
         }
     }

@@ -6,7 +6,7 @@ namespace Serilog.Sinks.Loki
 {
     internal static class LokiHttpClientExtensions
     {
-        private const string TenantHeader = "X-Scope-OrgID";
+        private const string _tenantHeader = "X-Scope-OrgID";
 
         private static readonly Regex _tenantIdValueRegex = new(@"^[a-zA-Z0-9]*$");
 
@@ -33,7 +33,7 @@ namespace Serilog.Sinks.Loki
 
             var headers = httpClient.DefaultRequestHeaders;
 
-            if (headers.Contains(TenantHeader))
+            if (headers.Contains(_tenantHeader))
             {
                 return;
             }
@@ -43,7 +43,7 @@ namespace Serilog.Sinks.Loki
                 throw new ArgumentException($"{tenant} argument does not follow rule for Tenant ID", nameof(tenant));
             }
 
-            headers.Add(TenantHeader, tenant);
+            headers.Add(_tenantHeader, tenant);
         }
     }
 }

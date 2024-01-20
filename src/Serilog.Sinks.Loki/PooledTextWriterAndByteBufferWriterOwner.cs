@@ -2,14 +2,12 @@
 
 namespace Serilog.Sinks.Loki
 {
-    internal class PooledTextWriterAndByteBufferWriterOwner
+    internal sealed class PooledTextWriterAndByteBufferWriterOwner : IDisposable
     {
         private readonly ConcurrentBag<Utf8TextWriter> _utf8TextWriters = [];
         private readonly ConcurrentBag<PooledByteBufferWriter> _byteBufferWriters = [];
 
-        public static readonly PooledTextWriterAndByteBufferWriterOwner Instance = new();
-
-        private PooledTextWriterAndByteBufferWriterOwner()
+        internal PooledTextWriterAndByteBufferWriterOwner()
         {
 
         }
@@ -48,6 +46,21 @@ namespace Serilog.Sinks.Loki
             byteBufferWriter.Clear();
 
             _byteBufferWriters.Add(byteBufferWriter);
+        }
+
+        public void Dispose()
+        {
+            foreach (var item in _utf8TextWriters)
+            {
+                item.Dispose();
+            }
+
+            foreach (var item in _byteBufferWriters)
+            {
+                item.Dispose();
+            }
+
+            GC.SuppressFinalize(this);
         }
     }
 }

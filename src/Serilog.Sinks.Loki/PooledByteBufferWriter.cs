@@ -13,7 +13,7 @@ namespace Serilog.Sinks.Loki
     /// <see href="https://github.com/dotnet/runtime/blob/72db600a20d581fdc6776edce1863bcf8da0b1cd/src/libraries/Common/src/System/Text/Json/PooledByteBufferWriter.cs"/>
     /// </para>
     /// </summary>
-    internal class PooledByteBufferWriter : IBufferWriter<byte>
+    internal sealed class PooledByteBufferWriter : IBufferWriter<byte>, IDisposable
     {
         private byte[] _buffer;
 
@@ -35,6 +35,13 @@ namespace Serilog.Sinks.Loki
         {
             _index = 0;
             _buffer.AsSpan().Clear();
+        }
+
+        public void Dispose()
+        {
+            Clear();
+            ArrayPool<byte>.Shared.Return(_buffer);
+            GC.SuppressFinalize(this);
         }
 
         public Memory<byte> GetMemory(int sizeHint = 256)

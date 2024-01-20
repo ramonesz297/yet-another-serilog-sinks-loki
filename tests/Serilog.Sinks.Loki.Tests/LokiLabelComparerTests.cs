@@ -8,7 +8,7 @@ namespace Serilog.Sinks.Loki.Tests
         private readonly LokiSinkConfigurations _configurations = new LokiSinkConfigurations()
         {
             PropertiesAsLabels = ["label1", "label2"],
-            ExposeLogLevelAsLabel = true
+            HandleLogLevelAsLabel = true
         };
 
         [Fact]

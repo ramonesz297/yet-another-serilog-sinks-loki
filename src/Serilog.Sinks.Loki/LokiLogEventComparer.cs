@@ -24,7 +24,7 @@ namespace Serilog.Sinks.Loki
                 return false;
             }
 
-            if (_configurations.ExposeLogLevelAsLabel && x.Level != y.Level)
+            if (_configurations.HandleLogLevelAsLabel && x.Level != y.Level)
             {
                 return false;
             }
@@ -63,7 +63,7 @@ namespace Serilog.Sinks.Loki
         {
             var hasCode = new HashCode();
 
-            if (_configurations.ExposeLogLevelAsLabel)
+            if (_configurations.HandleLogLevelAsLabel)
             {
                 hasCode.Add(obj.Level);
             }

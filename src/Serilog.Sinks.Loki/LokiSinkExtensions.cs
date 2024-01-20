@@ -1,12 +1,34 @@
 ﻿using Serilog.Configuration;
 using Serilog.Sinks.PeriodicBatching;
+using System.Net;
+using System.Reflection.Emit;
+using System;
 
 namespace Serilog.Sinks.Loki
 {
+    /// <summary>
+    /// Extensions for <see cref="LoggerSinkConfiguration"/> to add Loki sink(s) to the logger configuration.
+    /// </summary>
     public static class LokiSinkExtensions
     {
         /// <summary>
         /// Adds a sink that will send log events to Grafana Loki.
+        /// <para>
+        /// <code>
+        ///  Log.Logger = new LoggerConfiguration()
+        ///         .WriteTo.Loki(new LokiSinkConfigurations()
+        ///         {
+        ///                Credentials = new LokiCredentials("login here ", "password here "),
+        ///                Url = new Uri("uri to loki server here"),
+        ///                PropertiesAsLabels = ["userId"], 
+        ///                Labels = 
+        ///                [
+        ///                    new LokiLabel("app", "loki"),
+        ///                ]
+        ///            })
+        ///            .CreateLogger();
+        /// </code>
+        /// </para>
         /// </summary>
         /// <param name="loggerConfiguration"></param>
         /// <param name="configurations">common sink configurations</param>
@@ -22,9 +44,9 @@ namespace Serilog.Sinks.Loki
         /// <returns></returns>
         public static LoggerConfiguration Loki(this LoggerSinkConfiguration loggerConfiguration,
                                                    LokiSinkConfigurations configurations,
-                                                   int batchSizeLimit = 100,
+                                                   int batchSizeLimit = 1000,
                                                    TimeSpan? period = null,
-                                                   int queueLimit = 10000,
+                                                   int queueLimit = 100000,
                                                    bool eagerlyEmitFirstEvent = true,
                                                    HttpClient? httpClient = null)
         {
@@ -39,7 +61,7 @@ namespace Serilog.Sinks.Loki
                 Period = period.GetValueOrDefault(TimeSpan.FromSeconds(2)),
                 BatchSizeLimit = batchSizeLimit,
                 EagerlyEmitFirstEvent = eagerlyEmitFirstEvent,
-                QueueLimit = queueLimit,
+                QueueLimit = queueLimit, 
             });
 
             return loggerConfiguration.Sink(p);
