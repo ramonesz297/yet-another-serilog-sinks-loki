@@ -15,7 +15,7 @@ jobs:
         run: dotnet test ./tests/Serilog.Sinks.Loki.Tests/Serilog.Sinks.Loki.Tests.csproj -c Release --logger trx --results-directory out-tests
 
       - name: report
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v1.7.0
         if: success() || failure()
         with:
           name: test run
