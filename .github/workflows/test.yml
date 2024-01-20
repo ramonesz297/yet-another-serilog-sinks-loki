@@ -1,0 +1,23 @@
+name: test
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: tests
+        run: dotnet test ./tests/Serilog.Sinks.Loki.Tests/Serilog.Sinks.Loki.Tests.csproj -c Release --logger trx --results-directory out-tests
+    
+      - name: report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: test run
+          path: out-tests/*.trx
+          reporter: dotnet-trx
+          fail-on-error: "true"
