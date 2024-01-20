@@ -6,7 +6,7 @@
     "^refs/heads/v\\d+(?:\\.\\d+)?$"
   ],
   "release": {
-    "branchName": "release/v{0}",
+    "branchName": "release/v{version}",
     "versionIncrement" : "minor" 
   },
   "cloudBuild": {
