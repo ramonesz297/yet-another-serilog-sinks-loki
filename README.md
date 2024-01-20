@@ -65,7 +65,7 @@ LaunchCount=1  UnrollFactor=1  WarmupCount=3
 
 Allocations are decreased by 4.4 times compared to `Serilog.Sinks.Grafana.Loki` package, that is great!
 
-However, this banchmarking does not properly handle these cases, so execution time results ay not be accurate.
+However, this banchmarking does not properly handle these cases, so execution time results may not be accurate.
 
 
 
