@@ -11,7 +11,6 @@
 		<LangVersion>latest</LangVersion>
 		<PackageId>Serilog.Sinks.Loki.YetAnother</PackageId>
 		<PackageTags>serilog;loki;grafana;net8;</PackageTags>
-		<DebugType>embedded</DebugType>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
@@ -22,6 +21,7 @@
 		<PackageProjectUrl>https://github.com/ramonesz297/yet-another-serilog-sinks-loki</PackageProjectUrl>
 		<Description>A Serilog sink for Grafana Loki. Optimized to use less memory\CPU</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 	</PropertyGroup>
 	
 	<ItemGroup>
@@ -36,7 +36,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\..\LICENSE" Pack="true" Visible="false" PackagePath="" />
+		<None Include="..\..\LICENSE.txt" Pack="true" Visible="false" PackagePath="" />
 		<None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="" />
 		<None Include="..\..\assets\logo_128_128.png" Pack="true" Visible="false" PackagePath="" />
 	</ItemGroup>
