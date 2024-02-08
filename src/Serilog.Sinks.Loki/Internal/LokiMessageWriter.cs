@@ -229,6 +229,16 @@ namespace Serilog.Sinks.Loki.Internal
                 _exceptionFormatter.Format(writer, logEvent.Exception);
             }
 
+            if (_configurations.EnrichTraceId && logEvent.TraceId.HasValue)
+            {
+                writer.WriteString("TraceId"u8, logEvent.TraceId.Value.ToString());
+            }
+
+            if (_configurations.EnrichSpanId && logEvent.SpanId.HasValue)
+            {
+                writer.WriteString("SpanId"u8, logEvent.SpanId.Value.ToString());
+            }
+
             foreach (var item in logEvent.Properties)
             {
                 writer.WritePropertyName(item.Key);
