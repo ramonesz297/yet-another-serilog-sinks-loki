@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Reflection.Emit;
+using System.Text;
 using System.Text.Json;
 using Microsoft.VisualBasic;
 using Serilog.Events;
@@ -289,7 +291,7 @@ namespace Serilog.Sinks.Loki.Tests
 
             var mtp = _messageTemplateParser;
 
-            var userId = new LogEventProperty("userId",new ScalarValue(1));
+            var userId = new LogEventProperty("userId", new ScalarValue(1));
             var log1 = new LogEvent(_date, LogEventLevel.Information, null, mtp.Parse("log #1.1"), [userId]);
 
             logWriter.Write(jsonWriter, [log1]);
@@ -322,6 +324,32 @@ namespace Serilog.Sinks.Loki.Tests
             return Verify(Encoding.UTF8.GetString(bufferWriter.WrittenMemory.Span));
         }
 
+
+        [Fact]
+        public Task Should_enrich_span_and_trace_ids()
+        {
+
+            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var jsonWriter = new Utf8JsonWriter(bufferWriter);
+            var logWriter = Create(new LokiSinkConfigurations()
+            {
+                EnrichSpanId = true,
+                EnrichTraceId = true
+            });
+
+            //hardcoded traceId and spanId
+            var traceId = ActivityTraceId.CreateFromString("ed4ad863e4913c6183f28453ebac18e4");
+            var activityId = ActivitySpanId.CreateFromString("effd9f82dde27762");
+
+            var messageTemplate = _messageTemplateParser.Parse("log wihout parameters");
+
+            var log = new LogEvent(_date, LogEventLevel.Debug, null, messageTemplate, [], traceId, activityId);
+
+            logWriter.Write(jsonWriter, [log]);
+            jsonWriter.Flush();
+
+            return Verify(Encoding.UTF8.GetString(bufferWriter.WrittenMemory.Span));
+        }
 
         public void Dispose()
         {

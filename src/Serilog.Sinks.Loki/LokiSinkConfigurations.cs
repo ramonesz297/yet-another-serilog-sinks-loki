@@ -1,4 +1,6 @@
-﻿namespace Serilog.Sinks.Loki
+﻿using Serilog.Events;
+
+namespace Serilog.Sinks.Loki
 {
 
     /// <summary>
@@ -29,7 +31,7 @@
         public string[] PropertiesAsLabels { get; set; } = [];
 
         /// <summary>
-        /// When <see langword="true"/> then <see cref="Serilog.Events.LogEvent.Level"/> will be added as label.
+        /// When <see langword="true"/> then <see cref="LogEvent.Level"/> will be added as label.
         /// Default is <see langword="true"/>
         /// </summary>
         public bool HandleLogLevelAsLabel { get; set; } = true;
@@ -38,6 +40,18 @@
         /// Loki tenant name. When provided <code>X-Scope-OrgID</code> header will be added to each request
         /// </summary>
         public string? Tenant { get; set; }
+
+        /// <summary>
+        /// if <see langword="true"/> then <see cref="LogEvent.TraceId"/> from will be added to each log event 
+        /// as 'TraceId' json property
+        /// </summary>
+        public bool EnrichTraceId { get; set; } = false;
+
+        /// <summary>
+        /// if <see langword="true"/> then <see cref="LogEvent.SpanId"/> from will be added to each log event 
+        /// as 'SpanId' json property
+        /// </summary>
+        public bool EnrichSpanId { get; set; } = false;
 
     }
 }
