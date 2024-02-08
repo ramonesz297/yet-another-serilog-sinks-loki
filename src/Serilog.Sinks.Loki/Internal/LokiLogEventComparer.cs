@@ -1,7 +1,7 @@
 ﻿using Serilog.Events;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Serilog.Sinks.Loki
+namespace Serilog.Sinks.Loki.Internal
 {
     internal class LokiLogEventComparer : IEqualityComparer<LogEvent>
     {

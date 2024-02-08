@@ -1,4 +1,5 @@
 ﻿using Serilog.Events;
+using Serilog.Sinks.Loki.Internal;
 
 namespace Serilog.Sinks.Loki.Tests
 {

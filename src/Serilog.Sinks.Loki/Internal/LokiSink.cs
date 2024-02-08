@@ -1,9 +1,9 @@
 ﻿using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
 
-namespace Serilog.Sinks.Loki
+namespace Serilog.Sinks.Loki.Internal
 {
-    internal class LokiSink : IBatchedLogEventSink, IDisposable
+    internal sealed class LokiSink : IBatchedLogEventSink, IDisposable
     {
         private readonly LokiSinkConfigurations _configurations;
         private readonly LokiLogEventComparer _comparer;
@@ -11,12 +11,12 @@ namespace Serilog.Sinks.Loki
         private readonly HttpClient _httpClient;
         private readonly Uri _requestUri;
         private readonly PooledTextWriterAndByteBufferWriterOwner _bufferWriterOwner;
-        internal LokiSink(LokiSinkConfigurations configurations, HttpClient httpClient)
+        internal LokiSink(LokiSinkConfigurations configurations, HttpClient httpClient, ILokiExceptionFormatter exceptionFormatter)
         {
             _configurations = configurations;
             _comparer = new LokiLogEventComparer(_configurations);
             _bufferWriterOwner = new PooledTextWriterAndByteBufferWriterOwner();
-            _lokiMessageWriter = new LokiMessageWriter(_configurations, _bufferWriterOwner, _comparer);
+            _lokiMessageWriter = new LokiMessageWriter(_configurations, _bufferWriterOwner, _comparer, exceptionFormatter);
             _httpClient = httpClient;
             _httpClient.BaseAddress = configurations.Url;
             _httpClient.SetCredentials(configurations.Credentials);

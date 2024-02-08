@@ -1,8 +1,10 @@
-﻿using System.Globalization;
+﻿using Serilog.Sinks.Loki.Internal;
+using System.Globalization;
 using System.Text;
 
 namespace Serilog.Sinks.Loki.Tests
 {
+
     public class Utf8TextWriterTests
     {
 
@@ -138,5 +140,34 @@ namespace Serilog.Sinks.Loki.Tests
         }
 
 
+        [Fact]
+        public void Should_write_span_of_char()
+        {
+            var value = "span_of_chars".AsSpan();
+
+            _writer.Write(value);
+
+            Assert.Equal("span_of_chars", GetWrittenString());
+        }
+
+
+        [Fact]
+        public void Should_write_new_line()
+        {
+            _writer.Write("line1");
+            _writer.WriteLine();
+            _writer.Write("line2");
+
+            Assert.Equal($"line1{Environment.NewLine}line2", GetWrittenString());
+        }
+
+        [Fact]
+        public void Should_char_array()
+        {
+            const string expected = "value as char array";
+            var text = expected.ToCharArray();
+            _writer.Write(text);
+            Assert.Equal(expected, GetWrittenString());
+        }
     }
 }

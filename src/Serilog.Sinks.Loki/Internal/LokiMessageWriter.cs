@@ -1,19 +1,20 @@
 ﻿using Serilog.Events;
-using System.Text;
 using System.Text.Json;
 
-namespace Serilog.Sinks.Loki
+namespace Serilog.Sinks.Loki.Internal
 {
     internal class LokiMessageWriter
     {
         private readonly LokiSinkConfigurations _configurations;
         private readonly LokiLogEventComparer _comparer;
         private readonly PooledTextWriterAndByteBufferWriterOwner _bufferOwner;
-        internal LokiMessageWriter(LokiSinkConfigurations configurations, PooledTextWriterAndByteBufferWriterOwner bufferOwner, LokiLogEventComparer comparer)
+        private readonly ILokiExceptionFormatter _exceptionFormatter;
+        internal LokiMessageWriter(LokiSinkConfigurations configurations, PooledTextWriterAndByteBufferWriterOwner bufferOwner, LokiLogEventComparer comparer, ILokiExceptionFormatter exceptionFormatter)
         {
             _configurations = configurations;
             _comparer = comparer;
             _bufferOwner = bufferOwner;
+            _exceptionFormatter = exceptionFormatter;
         }
 
         private static ReadOnlySpan<byte> MapLogLevel(LogEventLevel logLevel)
@@ -93,7 +94,10 @@ namespace Serilog.Sinks.Loki
                             writer.WritePropertyName(label);
                         }
 
-                        WriteScalarValue(writer, scalarValue);
+                        if (!scalarValue.WriteAsStringValue(writer))
+                        {
+                            writer.WriteStringValue("");
+                        }
                     }
                 }
             }
@@ -128,136 +132,7 @@ namespace Serilog.Sinks.Loki
             writer.WriteStringValue(tw.WrittenMemory.Span);
 
             _bufferOwner.Return(tw);
-
-
         }
-
-        private bool WriteScalarPropertyName(Utf8JsonWriter writer, ScalarValue scalarValue)
-        {
-            if (scalarValue.Value is null)
-            {
-                return false;
-            }
-
-            int writedChars;
-            if (scalarValue.Value is int intValue)
-            {
-                Span<char> chars = stackalloc char[11];
-                intValue.TryFormat(chars, out writedChars);
-                writer.WritePropertyName(chars.Slice(0, writedChars));
-            }
-            else if (scalarValue.Value is double doubleValue)
-            {
-                Span<char> chars = stackalloc char[33];
-                doubleValue.TryFormat(chars, out writedChars);
-                writer.WritePropertyName(chars.Slice(0, writedChars));
-            }
-            else if (scalarValue.Value is float floatValue)
-            {
-                Span<char> chars = stackalloc char[33];
-                floatValue.TryFormat(chars, out writedChars);
-                writer.WritePropertyName(chars.Slice(0, writedChars));
-            }
-            else if (scalarValue.Value is decimal decimalValue)
-            {
-                Span<char> chars = stackalloc char[22];
-                decimalValue.TryFormat(chars, out writedChars);
-                writer.WritePropertyName(chars.Slice(0, writedChars));
-            }
-            else if (scalarValue.Value is string stringValue)
-            {
-                writer.WritePropertyName(stringValue);
-            }
-            else if (scalarValue.Value is long longValue)
-            {
-                Span<char> chars = stackalloc char[20];
-                longValue.TryFormat(chars, out writedChars);
-                writer.WritePropertyName(chars.Slice(0, writedChars));
-            }
-            else if (scalarValue.Value is bool booleanValue)
-            {
-                writer.WritePropertyName(booleanValue ? "true" : "false");
-            }
-            else if (scalarValue.Value is DateTimeOffset dateTimeOffsetValue)
-            {
-                Span<char> chars = stackalloc char[36];
-                dateTimeOffsetValue.TryFormat(chars, out writedChars, "O");
-                writer.WritePropertyName(chars);
-            }
-            else if (scalarValue.Value is DateTime dateTimeValue)
-            {
-                Span<char> chars = stackalloc char[36];
-                dateTimeValue.TryFormat(chars, out writedChars, "O");
-                writer.WritePropertyName(chars);
-            }
-            else if (scalarValue.Value != null)
-            {
-                var value = scalarValue.Value.ToString();
-
-                if (value is null)
-                {
-                    return false;
-                }
-
-                writer.WritePropertyName(value);
-            }
-            else
-            {
-                return false;
-            }
-
-            return true;
-        }
-        private static void WriteScalarValue(Utf8JsonWriter writer, ScalarValue scalarValue)
-        {
-            if (scalarValue.Value is null)
-            {
-                writer.WriteNullValue();
-                return;
-            }
-
-            if (scalarValue.Value is int intValue)
-            {
-                writer.WriteNumberValue(intValue);
-            }
-            else if (scalarValue.Value is uint uintValue)
-            {
-                writer.WriteNumberValue(uintValue);
-            }
-            else if (scalarValue.Value is string stringValue)
-            {
-                writer.WriteStringValue(stringValue);
-            }
-            else if (scalarValue.Value is float floatValue)
-            {
-                writer.WriteNumberValue(floatValue);
-            }
-            else if (scalarValue.Value is double doubleValue)
-            {
-                writer.WriteNumberValue(doubleValue);
-            }
-            else if (scalarValue.Value is long longValue)
-            {
-                writer.WriteNumberValue(longValue);
-            }
-            else if (scalarValue.Value is ulong ulongValue)
-            {
-                writer.WriteNumberValue(ulongValue);
-            }
-            else if (scalarValue.Value is DateTime dateTimeValue)
-            {
-                writer.WriteStringValue(dateTimeValue);
-            }
-            else if (scalarValue.Value is DateTimeOffset dateTimeOffsetValue)
-            {
-                writer.WriteStringValue(dateTimeOffsetValue);
-            }
-            else
-            {
-                writer.WriteStringValue(scalarValue.Value.ToString());
-            }
-        }
-
 
         private void WriteStructuredValue(Utf8JsonWriter writer, StructureValue structureValue)
         {
@@ -274,7 +149,6 @@ namespace Serilog.Sinks.Loki
 
         private void WriteSequenceValue(Utf8JsonWriter writer, SequenceValue sequence)
         {
-
             writer.WriteStartArray();
 
             foreach (var item in sequence.Elements)
@@ -297,7 +171,7 @@ namespace Serilog.Sinks.Loki
 
             foreach (var item in value.Elements)
             {
-                if (WriteScalarPropertyName(writer, item.Key))
+                if (item.Key.WriteAsPropertyName(writer))
                 {
                     WritePropertyValue(writer, item.Value);
                 }
@@ -314,7 +188,7 @@ namespace Serilog.Sinks.Loki
             }
             else if (value is ScalarValue scalarValue)
             {
-                WriteScalarValue(writer, scalarValue);
+                scalarValue.WriteAsValue(writer);
             }
             else if (value is DictionaryValue dictionaryValue)
             {
@@ -335,35 +209,6 @@ namespace Serilog.Sinks.Loki
         }
 
 
-        private static void WriteException(Utf8JsonWriter writer, Exception exception)
-        {
-            if (exception is null)
-            {
-                return;
-            }
-
-            writer.WriteStartObject();
-
-            writer.WriteString("Type"u8, exception.GetType().FullName);
-
-            writer.WriteString("Message"u8, exception.Message);
-
-            if (exception.Source is not null)
-            {
-                writer.WriteString("Source"u8, exception.Source);
-            }
-
-            writer.WriteString("StackTrace"u8, exception.StackTrace);
-
-            if (exception.InnerException is not null)
-            {
-                writer.WritePropertyName("InnerException"u8);
-                WriteException(writer, exception.InnerException);
-            }
-
-            writer.WriteEndObject();
-        }
-
         private void WriteLogMessageAsJson(Utf8JsonWriter destination, LogEvent logEvent)
         {
             var byteBufferWriter = _bufferOwner.RentBufferWriter();
@@ -381,7 +226,7 @@ namespace Serilog.Sinks.Loki
             if (logEvent.Exception is not null)
             {
                 writer.WritePropertyName("Exception"u8);
-                WriteException(writer, logEvent.Exception);
+                _exceptionFormatter.Format(writer, logEvent.Exception);
             }
 
             foreach (var item in logEvent.Properties)

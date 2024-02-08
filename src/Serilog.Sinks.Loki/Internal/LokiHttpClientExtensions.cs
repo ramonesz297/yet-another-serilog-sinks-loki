@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Serilog.Sinks.Loki
+namespace Serilog.Sinks.Loki.Internal
 {
     internal static class LokiHttpClientExtensions
     {
