@@ -1,6 +1,7 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 
-namespace Serilog.Sinks.Loki
+namespace Serilog.Sinks.Loki.Internal
 {
     /// <summary>
     /// <para>
@@ -41,6 +42,7 @@ namespace Serilog.Sinks.Loki
         {
             Clear();
             ArrayPool<byte>.Shared.Return(_buffer);
+            _buffer = null!;
             GC.SuppressFinalize(this);
         }
 
@@ -60,7 +62,7 @@ namespace Serilog.Sinks.Loki
         {
             var length = _buffer.Length;
 
-            if (sizeHint <= (length - _index))
+            if (sizeHint <= length - _index)
             {
                 return;
             }

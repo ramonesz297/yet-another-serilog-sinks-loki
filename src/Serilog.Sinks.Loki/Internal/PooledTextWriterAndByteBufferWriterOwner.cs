@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace Serilog.Sinks.Loki
+namespace Serilog.Sinks.Loki.Internal
 {
     internal sealed class PooledTextWriterAndByteBufferWriterOwner : IDisposable
     {

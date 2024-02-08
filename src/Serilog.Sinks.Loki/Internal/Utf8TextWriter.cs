@@ -1,7 +1,7 @@
 ﻿using System.Buffers.Text;
 using System.Text;
 
-namespace Serilog.Sinks.Loki
+namespace Serilog.Sinks.Loki.Internal
 {
     internal sealed class Utf8TextWriter : TextWriter
     {

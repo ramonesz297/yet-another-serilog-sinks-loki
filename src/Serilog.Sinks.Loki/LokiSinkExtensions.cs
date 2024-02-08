@@ -1,8 +1,6 @@
 ﻿using Serilog.Configuration;
+using Serilog.Sinks.Loki.Internal;
 using Serilog.Sinks.PeriodicBatching;
-using System.Net;
-using System.Reflection.Emit;
-using System;
 
 namespace Serilog.Sinks.Loki
 {
@@ -41,6 +39,7 @@ namespace Serilog.Sinks.Loki
         /// applications interactively. The default is true.
         ///  </param>
         /// <param name="httpClient">Custom HttpClient instance</param>
+        /// <param name="exceptionFormatter">Custom formatter for exceptions</param>
         /// <returns></returns>
         public static LoggerConfiguration Loki(this LoggerSinkConfiguration loggerConfiguration,
                                                    LokiSinkConfigurations configurations,
@@ -48,7 +47,8 @@ namespace Serilog.Sinks.Loki
                                                    TimeSpan? period = null,
                                                    int queueLimit = 100000,
                                                    bool eagerlyEmitFirstEvent = true,
-                                                   HttpClient? httpClient = null)
+                                                   HttpClient? httpClient = null,
+                                                   ILokiExceptionFormatter? exceptionFormatter = null)
         {
 
             ArgumentNullException.ThrowIfNull(configurations, nameof(configurations));
@@ -56,12 +56,12 @@ namespace Serilog.Sinks.Loki
             ArgumentNullException.ThrowIfNull(configurations.Labels, "configurations.Labels");
             ArgumentNullException.ThrowIfNull(configurations.PropertiesAsLabels, "configurations.PropertiesAsLabels");
 
-            var p = new PeriodicBatchingSink(new LokiSink(configurations, httpClient ?? new()), new()
+            var p = new PeriodicBatchingSink(new LokiSink(configurations, httpClient ?? new(), exceptionFormatter ?? new DefaultLokiExceptionFormatter()), new()
             {
                 Period = period.GetValueOrDefault(TimeSpan.FromSeconds(2)),
                 BatchSizeLimit = batchSizeLimit,
                 EagerlyEmitFirstEvent = eagerlyEmitFirstEvent,
-                QueueLimit = queueLimit, 
+                QueueLimit = queueLimit,
             });
 
             return loggerConfiguration.Sink(p);
