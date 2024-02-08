@@ -5,6 +5,11 @@
     "^refs/heads/master$",
     "^refs/tags/v\\d+\\.\\d+"
   ],
+  "release": {
+    "branchName" : "release/v{version}",
+    "versionIncrement" : "minor",
+    "firstUnstableTag" : "alpha"
+  },
   "cloudBuild": {
     "buildNumber": {
       "enabled": true
