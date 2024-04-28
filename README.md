@@ -41,6 +41,64 @@ As the result, you can send more logs with less drawbacks.
 
 ```
 
+### Using Serilog.Settings.Configurations
+
+
+#### appsettings.json
+```json
+
+{
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.Loki" ],
+    "WriteTo": [
+      {
+        "Name": "Loki",
+        "Args": {
+          "configurations": {
+            "Url": "https://logs-prod42.grafana.net",
+            "Labels": [
+              {
+                "key": "app",
+                "value": "myapp"
+              }
+            ],
+            "Credentials": {
+              "Password": "password",
+              "Username": "username"
+            },
+            "PropertiesAsLabels": [
+              "app",
+              "environment"
+            ],
+            "HandleLogLevelAsLabel": false,
+            "EnrichTraceId": true,
+            "EnrichSpanId": true
+          },
+          "batchSizeLimit": 999
+        }
+      }
+    ]
+  }
+}
+
+```
+
+#### Program.cs
+```csharp
+
+using Microsoft.Extensions.Configuration;
+using Serilog;
+
+var builder = new ConfigurationBuilder()
+    .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"))
+    .Build();
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder)
+    .CreateLogger();
+
+
+```
 
 ### Benchmarks
 
