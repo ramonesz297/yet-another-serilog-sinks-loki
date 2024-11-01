@@ -48,8 +48,6 @@ namespace Serilog.Sinks.Loki.Benchmark
             _logger.Dispose();
         }
 
-
-
         [Benchmark(Baseline = true)]
         public async Task Default()
         {

@@ -1,11 +1,9 @@
-﻿using System.Diagnostics;
-using System.Reflection.Emit;
-using System.Text;
-using System.Text.Json;
-using Microsoft.VisualBasic;
-using Serilog.Events;
+﻿using Serilog.Events;
 using Serilog.Parsing;
 using Serilog.Sinks.Loki.Internal;
+using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
 
 namespace Serilog.Sinks.Loki.Tests
 {

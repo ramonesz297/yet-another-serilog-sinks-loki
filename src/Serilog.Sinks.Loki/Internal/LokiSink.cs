@@ -1,5 +1,5 @@
-﻿using Serilog.Events;
-using Serilog.Sinks.PeriodicBatching;
+﻿using Serilog.Core;
+using Serilog.Events;
 
 namespace Serilog.Sinks.Loki.Internal
 {
@@ -25,7 +25,7 @@ namespace Serilog.Sinks.Loki.Internal
         }
 
 
-        public Task EmitBatchAsync(IEnumerable<LogEvent> batch)
+        public Task EmitBatchAsync(IReadOnlyCollection<LogEvent> batch)
         {
             var content = LokiPushContent.Create(_lokiMessageWriter, _bufferWriterOwner, batch);
 

@@ -9,9 +9,9 @@ namespace Serilog.Sinks.Loki.Internal
     {
         private static readonly MediaTypeHeaderValue _defaultContentType = new MediaTypeHeaderValue("application/json");
         private readonly LokiMessageWriter _writer;
-        private readonly IEnumerable<LogEvent> _events;
+        private readonly IReadOnlyCollection<LogEvent> _events;
         private readonly PooledTextWriterAndByteBufferWriterOwner _bufferOwner;
-        private LokiPushContent(LokiMessageWriter writer, PooledTextWriterAndByteBufferWriterOwner bufferOwner, IEnumerable<LogEvent> events)
+        private LokiPushContent(LokiMessageWriter writer, PooledTextWriterAndByteBufferWriterOwner bufferOwner, IReadOnlyCollection<LogEvent> events)
         {
             _writer = writer;
             _events = events;
@@ -19,8 +19,9 @@ namespace Serilog.Sinks.Loki.Internal
             _bufferOwner = bufferOwner;
         }
 
-        internal static HttpContent Create(LokiMessageWriter writer, PooledTextWriterAndByteBufferWriterOwner bufferOwner, IEnumerable<LogEvent> events) =>
-            new LokiPushContent(writer, bufferOwner, events);
+        internal static HttpContent Create(LokiMessageWriter writer,
+                                           PooledTextWriterAndByteBufferWriterOwner bufferOwner,
+                                           IReadOnlyCollection<LogEvent> events) => new LokiPushContent(writer, bufferOwner, events);
 
         protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
         {

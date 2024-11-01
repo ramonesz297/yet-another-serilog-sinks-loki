@@ -31,12 +31,12 @@ namespace Serilog.Sinks.Loki.Internal
             };
         }
 
-
-        public void Write(Utf8JsonWriter writer, IEnumerable<LogEvent> events)
+        public void Write(Utf8JsonWriter writer, IReadOnlyCollection<LogEvent> events)
         {
             writer.WriteStartObject();
             writer.WritePropertyName("streams"u8);
             writer.WriteStartArray();
+
             foreach (var stream in events.GroupBy(x => x, _comparer))
             {
                 WriteStream(writer, stream.Key, stream);

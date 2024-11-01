@@ -1,5 +1,4 @@
 ﻿using Serilog.Sinks.Grafana.Loki;
-using System.Net.Http;
 using GrafanaLokiLabel = Serilog.Sinks.Grafana.Loki.LokiLabel;
 
 namespace Serilog.Sinks.Loki.Benchmark
