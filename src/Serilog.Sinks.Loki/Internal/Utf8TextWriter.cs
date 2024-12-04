@@ -10,7 +10,7 @@ namespace Serilog.Sinks.Loki.Internal
         private int _index = 0;
 
         private Memory<byte> _buffer;
-        public override Encoding Encoding { get; } = Encoding.UTF8;
+        public override Encoding Encoding => Encoding.UTF8;
 
         internal Utf8TextWriter(PooledByteBufferWriter pooledByteBufferWriter)
         {
@@ -18,9 +18,22 @@ namespace Serilog.Sinks.Loki.Internal
             _buffer = _pooledByteBufferWriter.GetMemory();
         }
 
-        private Span<byte> Cursor => _buffer.Span.Slice(_index);
 
-        public ReadOnlyMemory<byte> WrittenMemory => _pooledByteBufferWriter.WrittenMemory;
+        private Span<byte> Cursor
+        {
+            get
+            {
+                return _buffer.Span.Slice(_index);
+            }
+        }
+
+        public ReadOnlyMemory<byte> WrittenMemory
+        {
+            get
+            {
+                return _pooledByteBufferWriter.WrittenMemory;
+            }
+        }
 
         public override void Write(bool value)
         {
@@ -35,7 +48,7 @@ namespace Serilog.Sinks.Loki.Internal
 
         public override void Write(int value)
         {
-            var maxLen = 11;
+            const int maxLen = 11;
 
             EnsureCapacity(maxLen);
 
@@ -46,7 +59,7 @@ namespace Serilog.Sinks.Loki.Internal
 
         public override void Write(uint value)
         {
-            var maxLen = 10;
+            const int maxLen = 10;
             EnsureCapacity(maxLen);
 
             Utf8Formatter.TryFormat(value, Cursor, out var bytesWritten);
@@ -56,7 +69,7 @@ namespace Serilog.Sinks.Loki.Internal
 
         public override void Write(long value)
         {
-            var maxLen = 20;
+            const int maxLen = 20;
             EnsureCapacity(maxLen);
 
             Utf8Formatter.TryFormat(value, Cursor, out var bytesWritten);
@@ -66,7 +79,7 @@ namespace Serilog.Sinks.Loki.Internal
 
         public override void Write(ulong value)
         {
-            var maxLen = 20;
+            const int maxLen = 20;
             EnsureCapacity(maxLen);
 
             Utf8Formatter.TryFormat(value, Cursor, out var bytesWritten);
@@ -77,7 +90,7 @@ namespace Serilog.Sinks.Loki.Internal
 
         public override void Write(float value)
         {
-            var maxLen = 32;
+            const int maxLen = 32;
 
             EnsureCapacity(maxLen);
 
@@ -88,7 +101,7 @@ namespace Serilog.Sinks.Loki.Internal
 
         public override void Write(double value)
         {
-            var maxLen = 32;
+            const int maxLen = 32;
 
             EnsureCapacity(maxLen);
 
@@ -104,7 +117,7 @@ namespace Serilog.Sinks.Loki.Internal
 
         public override void Write(decimal value)
         {
-            var maxLen = 64;
+            const int maxLen = 64;
 
             EnsureCapacity(maxLen);
 
@@ -169,7 +182,6 @@ namespace Serilog.Sinks.Loki.Internal
             {
                 _index = 0;
                 _buffer = default;
-                _pooledByteBufferWriter.Dispose();
             }
         }
 

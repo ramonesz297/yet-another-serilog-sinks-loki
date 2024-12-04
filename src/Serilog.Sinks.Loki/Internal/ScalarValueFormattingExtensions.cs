@@ -13,45 +13,38 @@ namespace Serilog.Sinks.Loki.Internal
                 return;
             }
 
-            if (scalarValue.Value is int intValue)
+            switch (scalarValue.Value)
             {
-                writer.WriteNumberValue(intValue);
-            }
-            else if (scalarValue.Value is uint uintValue)
-            {
-                writer.WriteNumberValue(uintValue);
-            }
-            else if (scalarValue.Value is string stringValue)
-            {
-                writer.WriteStringValue(stringValue);
-            }
-            else if (scalarValue.Value is float floatValue)
-            {
-                writer.WriteNumberValue(floatValue);
-            }
-            else if (scalarValue.Value is double doubleValue)
-            {
-                writer.WriteNumberValue(doubleValue);
-            }
-            else if (scalarValue.Value is long longValue)
-            {
-                writer.WriteNumberValue(longValue);
-            }
-            else if (scalarValue.Value is ulong ulongValue)
-            {
-                writer.WriteNumberValue(ulongValue);
-            }
-            else if (scalarValue.Value is DateTime dateTimeValue)
-            {
-                writer.WriteStringValue(dateTimeValue);
-            }
-            else if (scalarValue.Value is DateTimeOffset dateTimeOffsetValue)
-            {
-                writer.WriteStringValue(dateTimeOffsetValue);
-            }
-            else
-            {
-                writer.WriteStringValue(scalarValue.Value.ToString());
+                case int intValue:
+                    writer.WriteNumberValue(intValue);
+                    break;
+                case uint uintValue:
+                    writer.WriteNumberValue(uintValue);
+                    break;
+                case string stringValue:
+                    writer.WriteStringValue(stringValue);
+                    break;
+                case float floatValue:
+                    writer.WriteNumberValue(floatValue);
+                    break;
+                case double doubleValue:
+                    writer.WriteNumberValue(doubleValue);
+                    break;
+                case long longValue:
+                    writer.WriteNumberValue(longValue);
+                    break;
+                case ulong ulongValue:
+                    writer.WriteNumberValue(ulongValue);
+                    break;
+                case DateTime dateTimeValue:
+                    writer.WriteStringValue(dateTimeValue);
+                    break;
+                case DateTimeOffset dateTimeOffsetValue:
+                    writer.WriteStringValue(dateTimeOffsetValue);
+                    break;
+                default:
+                    writer.WriteStringValue(scalarValue.Value.ToString());
+                    break;
             }
         }
 

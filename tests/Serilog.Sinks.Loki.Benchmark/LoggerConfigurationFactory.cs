@@ -3,38 +3,37 @@ using GrafanaLokiLabel = Serilog.Sinks.Grafana.Loki.LokiLabel;
 
 namespace Serilog.Sinks.Loki.Benchmark
 {
-
     public static class LoggerConfigurationFactory
     {
-        public static LoggerConfiguration Default()
+        public static LoggerConfiguration Default(string uri)
         {
             return new LoggerConfiguration()
                 .MinimumLevel.Verbose()
-                .WriteTo.GrafanaLoki(Environment.GetEnvironmentVariable("LokiUrl")!, [new GrafanaLokiLabel()
+                .WriteTo.GrafanaLoki(uri, [new GrafanaLokiLabel()
                 {
                     Key = "app",
                     Value = "sink1"
                 }], credentials: new()
                 {
-                    Login = Environment.GetEnvironmentVariable("LokiLogin")!,
-                    Password = Environment.GetEnvironmentVariable("LokiPassword")!
-                }, period: TimeSpan.FromMilliseconds(100), batchPostingLimit: 300, propertiesAsLabels: ["level"]);
+                    Login = "login",
+                    Password = "pass"
+                }, propertiesAsLabels: ["level"], period: TimeSpan.FromMilliseconds(500));
         }
 
-        public static LoggerConfiguration Optimized()
+        public static LoggerConfiguration Optimized(string uri)
         {
             return new LoggerConfiguration()
                 .MinimumLevel.Verbose()
                 .WriteTo.Loki(new LokiSinkConfigurations()
                 {
-                    Credentials = new LokiCredentials(Environment.GetEnvironmentVariable("LokiLogin")!, Environment.GetEnvironmentVariable("LokiPassword")),
-                    Url = new Uri(Environment.GetEnvironmentVariable("LokiUrl")!),
+                    Credentials = new LokiCredentials("login", "pass"),
+                    Url = new Uri(uri),
                     HandleLogLevelAsLabel = true,
                     Labels =
                     [
                         new LokiLabel("app", "sinks2"),
                     ],
-                }, period: TimeSpan.FromMilliseconds(100), batchSizeLimit: 300);
+                }, period: TimeSpan.FromMilliseconds(500));
         }
     }
 

@@ -1,40 +1,57 @@
 ﻿using Serilog.Events;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace Serilog.Sinks.Loki.Internal
 {
     internal class LokiMessageWriter
     {
+        private const string _levelLiteral = "level";
+        private static readonly JsonEncodedText _stream = JsonEncodedText.Encode("stream");
+        private static readonly JsonEncodedText _streams = JsonEncodedText.Encode("streams");
+        private static readonly JsonEncodedText _level = JsonEncodedText.Encode(_levelLiteral);
+        private static readonly JsonEncodedText _values = JsonEncodedText.Encode("values");
+        private static readonly JsonEncodedText _message = JsonEncodedText.Encode("Message");
+        private static readonly JsonEncodedText _messageTemplate = JsonEncodedText.Encode("MessageTemplate");
+        private static readonly JsonEncodedText _exception = JsonEncodedText.Encode("Exception");
+        private static readonly JsonEncodedText _traceId = JsonEncodedText.Encode("TraceId");
+        private static readonly JsonEncodedText _spanId = JsonEncodedText.Encode("SpanId");
+        private static readonly JsonEncodedText _trace = JsonEncodedText.Encode("trace");
+        private static readonly JsonEncodedText _debug = JsonEncodedText.Encode("debug");
+        private static readonly JsonEncodedText _info = JsonEncodedText.Encode("info");
+        private static readonly JsonEncodedText _warning = JsonEncodedText.Encode("warning");
+        private static readonly JsonEncodedText _error = JsonEncodedText.Encode("error");
+        private static readonly JsonEncodedText _critical = JsonEncodedText.Encode("critical");
+        private static readonly JsonEncodedText _unknown = JsonEncodedText.Encode("unknown");
+
         private readonly LokiSinkConfigurations _configurations;
         private readonly LokiLogEventComparer _comparer;
-        private readonly PooledTextWriterAndByteBufferWriterOwner _bufferOwner;
         private readonly ILokiExceptionFormatter _exceptionFormatter;
-        internal LokiMessageWriter(LokiSinkConfigurations configurations, PooledTextWriterAndByteBufferWriterOwner bufferOwner, LokiLogEventComparer comparer, ILokiExceptionFormatter exceptionFormatter)
+        internal LokiMessageWriter(LokiSinkConfigurations configurations, LokiLogEventComparer comparer, ILokiExceptionFormatter exceptionFormatter)
         {
             _configurations = configurations;
             _comparer = comparer;
-            _bufferOwner = bufferOwner;
             _exceptionFormatter = exceptionFormatter;
         }
 
-        private static ReadOnlySpan<byte> MapLogLevel(LogEventLevel logLevel)
+        private static JsonEncodedText MapLogLevel(LogEventLevel logLevel)
         {
             return logLevel switch
             {
-                LogEventLevel.Verbose => "trace"u8,
-                LogEventLevel.Debug => "debug"u8,
-                LogEventLevel.Information => "info"u8,
-                LogEventLevel.Warning => "warning"u8,
-                LogEventLevel.Error => "error"u8,
-                LogEventLevel.Fatal => "critical"u8,
-                _ => "unknown"u8
+                LogEventLevel.Verbose => _trace,
+                LogEventLevel.Debug => _debug,
+                LogEventLevel.Information => _info,
+                LogEventLevel.Warning => _warning,
+                LogEventLevel.Error => _error,
+                LogEventLevel.Fatal => _critical,
+                _ => _unknown
             };
         }
 
         public void Write(Utf8JsonWriter writer, IReadOnlyCollection<LogEvent> events)
         {
             writer.WriteStartObject();
-            writer.WritePropertyName("streams"u8);
+            writer.WritePropertyName(_streams);
             writer.WriteStartArray();
 
             foreach (var stream in events.GroupBy(x => x, _comparer))
@@ -48,12 +65,12 @@ namespace Serilog.Sinks.Loki.Internal
 
         private void WriteLabels(Utf8JsonWriter writer, LogEvent head)
         {
-            writer.WritePropertyName("stream"u8);
+            writer.WritePropertyName(_stream);
             writer.WriteStartObject();
 
             if (_configurations.HandleLogLevelAsLabel)
             {
-                writer.WritePropertyName("level"u8);
+                writer.WritePropertyName(_level);
                 writer.WriteStringValue(MapLogLevel(head.Level));
             }
 
@@ -61,7 +78,7 @@ namespace Serilog.Sinks.Loki.Internal
             {
                 var label = _configurations.Labels[i];
 
-                if (label.Key == "level" && _configurations.HandleLogLevelAsLabel)
+                if (label.Key == _levelLiteral && _configurations.HandleLogLevelAsLabel)
                 {
                     continue;
                 }
@@ -79,9 +96,9 @@ namespace Serilog.Sinks.Loki.Internal
                     {
                         //if user want to expose log level as label and there are property with same name
                         //then we need to rename property name
-                        if (label == "level" && _configurations.HandleLogLevelAsLabel)
+                        if (label == _levelLiteral && _configurations.HandleLogLevelAsLabel)
                         {
-                            writer.WritePropertyName("_level"u8);
+                            writer.WritePropertyName(_level);
                         }
                         //if user already declared the same property as lable in global labels and in properties as labels
                         //then we need to rename property name
@@ -104,6 +121,7 @@ namespace Serilog.Sinks.Loki.Internal
 
             writer.WriteEndObject();
 
+            [SkipLocalsInit]
             static void WriteMaskedPropertyName(Utf8JsonWriter writer, string propertyName)
             {
                 //use stackallok only for small strings
@@ -121,20 +139,16 @@ namespace Serilog.Sinks.Loki.Internal
             }
         }
 
-        private void WriteLogMessageStringValue(Utf8JsonWriter writer, LogEvent logEvent)
+        private static void WriteLogMessageStringValue(Utf8JsonWriter writer, LogEvent logEvent)
         {
-            var tw = _bufferOwner.RentWriter();
-
+            using var bf = new PooledByteBufferWriter();
+            using var tw = new Utf8TextWriter(bf);
             logEvent.RenderMessage(tw);
-
             tw.Flush();
-
             writer.WriteStringValue(tw.WrittenMemory.Span);
-
-            _bufferOwner.Return(tw);
         }
 
-        private void WriteStructuredValue(Utf8JsonWriter writer, StructureValue structureValue)
+        private static void WriteStructuredValue(Utf8JsonWriter writer, StructureValue structureValue)
         {
             writer.WriteStartObject();
 
@@ -147,7 +161,7 @@ namespace Serilog.Sinks.Loki.Internal
             writer.WriteEndObject();
         }
 
-        private void WriteSequenceValue(Utf8JsonWriter writer, SequenceValue sequence)
+        private static void WriteSequenceValue(Utf8JsonWriter writer, SequenceValue sequence)
         {
             writer.WriteStartArray();
 
@@ -159,7 +173,7 @@ namespace Serilog.Sinks.Loki.Internal
             writer.WriteEndArray();
         }
 
-        private void WriteDictionaryValue(Utf8JsonWriter writer, DictionaryValue value)
+        private static void WriteDictionaryValue(Utf8JsonWriter writer, DictionaryValue value)
         {
             if (value.Elements is null)
             {
@@ -180,63 +194,58 @@ namespace Serilog.Sinks.Loki.Internal
             writer.WriteEndObject();
         }
 
-        private void WritePropertyValue(Utf8JsonWriter writer, LogEventPropertyValue? value)
+        private static void WritePropertyValue(Utf8JsonWriter writer, LogEventPropertyValue? value)
         {
-            if (value is null)
+            switch (value)
             {
-                writer.WriteNullValue();
-            }
-            else if (value is ScalarValue scalarValue)
-            {
-                scalarValue.WriteAsValue(writer);
-            }
-            else if (value is DictionaryValue dictionaryValue)
-            {
-                WriteDictionaryValue(writer, dictionaryValue);
-            }
-            else if (value is SequenceValue sequenceValue)
-            {
-                WriteSequenceValue(writer, sequenceValue);
-            }
-            else if (value is StructureValue structureValue)
-            {
-                WriteStructuredValue(writer, structureValue);
-            }
-            else
-            {
-                writer.WriteStringValue(value.ToString());
+                case null:
+                    writer.WriteNullValue();
+                    break;
+                case ScalarValue scalarValue:
+                    scalarValue.WriteAsValue(writer);
+                    break;
+                case DictionaryValue dictionaryValue:
+                    WriteDictionaryValue(writer, dictionaryValue);
+                    break;
+                case SequenceValue sequenceValue:
+                    WriteSequenceValue(writer, sequenceValue);
+                    break;
+                case StructureValue structureValue:
+                    WriteStructuredValue(writer, structureValue);
+                    break;
+                default:
+                    writer.WriteStringValue(value.ToString());
+                    break;
             }
         }
 
-
         private void WriteLogMessageAsJson(Utf8JsonWriter destination, LogEvent logEvent)
         {
-            var byteBufferWriter = _bufferOwner.RentBufferWriter();
-
+            using var byteBufferWriter = new PooledByteBufferWriter();
             using var writer = new Utf8JsonWriter(byteBufferWriter);
 
             writer.WriteStartObject();
 
-            writer.WritePropertyName("Message"u8);
+            writer.WritePropertyName(_message);
 
             WriteLogMessageStringValue(writer, logEvent);
 
-            writer.WriteString("MessageTemplate"u8, logEvent.MessageTemplate.Text);
+            writer.WriteString(_messageTemplate, logEvent.MessageTemplate.Text);
 
             if (logEvent.Exception is not null)
             {
-                writer.WritePropertyName("Exception"u8);
+                writer.WritePropertyName(_exception);
                 _exceptionFormatter.Format(writer, logEvent.Exception);
             }
 
             if (_configurations.EnrichTraceId && logEvent.TraceId.HasValue)
             {
-                writer.WriteString("TraceId"u8, logEvent.TraceId.Value.ToString());
+                writer.WriteString(_traceId, logEvent.TraceId.Value.ToString());
             }
 
             if (_configurations.EnrichSpanId && logEvent.SpanId.HasValue)
             {
-                writer.WriteString("SpanId"u8, logEvent.SpanId.Value.ToString());
+                writer.WriteString(_spanId, logEvent.SpanId.Value.ToString());
             }
 
             foreach (var item in logEvent.Properties)
@@ -251,15 +260,13 @@ namespace Serilog.Sinks.Loki.Internal
             writer.Flush();
 
             destination.WriteStringValue(byteBufferWriter.WrittenMemory.Span);
-
-            _bufferOwner.Return(byteBufferWriter);
         }
 
 
 
         private void WriteLogs(Utf8JsonWriter writer, IEnumerable<LogEvent> events)
         {
-            writer.WritePropertyName("values"u8);
+            writer.WritePropertyName(_values);
             writer.WriteStartArray();
 
             Span<char> buffer = stackalloc char[22];

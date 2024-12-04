@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<AssemblyName>Serilog.Sinks.Loki</AssemblyName>
-		<TargetFrameworks>net6.0;net8.0;</TargetFrameworks>
+		<TargetFrameworks>net6.0;net8.0;net9.0;</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<PackageIcon>logo_128_128.png</PackageIcon>
 		<Nullable>enable</Nullable>
@@ -10,7 +10,7 @@
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<LangVersion>latest</LangVersion>
 		<PackageId>Serilog.Sinks.Loki.YetAnother</PackageId>
-		<PackageTags>serilog;loki;grafana;net8;</PackageTags>
+		<PackageTags>serilog;loki;grafana;net8;net9;</PackageTags>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
@@ -19,19 +19,23 @@
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<RepositoryUrl>https://github.com/ramonesz297/yet-another-serilog-sinks-loki</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/ramonesz297/yet-another-serilog-sinks-loki</PackageProjectUrl>
-		<Description>A Serilog sink for Grafana Loki. Optimized to use less memory\CPU</Description>
+		<Description>A Serilog sink for Grafana Loki. With spanId and traceId support!</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 	
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 			<_Parameter1>$(AssemblyName).Tests</_Parameter1>
 		</AssemblyAttribute>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>Serilog.Sinks.Loki.Benchmark</_Parameter1>
+		</AssemblyAttribute>
 	</ItemGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="Serilog" Version="[4.1.0,)" />
+		<PackageReference Include="Serilog" Version="4.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -41,7 +45,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Update="Nerdbank.GitVersioning" Version="3.6.146" >
+		<PackageReference Update="Nerdbank.GitVersioning" Version="3.6.146">
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 	</ItemGroup>

@@ -10,22 +10,19 @@ namespace Serilog.Sinks.Loki.Internal
         private static readonly MediaTypeHeaderValue _defaultContentType = new MediaTypeHeaderValue("application/json");
         private readonly LokiMessageWriter _writer;
         private readonly IReadOnlyCollection<LogEvent> _events;
-        private readonly PooledTextWriterAndByteBufferWriterOwner _bufferOwner;
-        private LokiPushContent(LokiMessageWriter writer, PooledTextWriterAndByteBufferWriterOwner bufferOwner, IReadOnlyCollection<LogEvent> events)
+        private LokiPushContent(LokiMessageWriter writer, IReadOnlyCollection<LogEvent> events)
         {
             _writer = writer;
             _events = events;
             Headers.ContentType = _defaultContentType;
-            _bufferOwner = bufferOwner;
         }
 
         internal static HttpContent Create(LokiMessageWriter writer,
-                                           PooledTextWriterAndByteBufferWriterOwner bufferOwner,
-                                           IReadOnlyCollection<LogEvent> events) => new LokiPushContent(writer, bufferOwner, events);
+                                           IReadOnlyCollection<LogEvent> events) => new LokiPushContent(writer, events);
 
         protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
         {
-            var bufferWriter = _bufferOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter(1024 * 4);
 
             using var writer = new Utf8JsonWriter(bufferWriter);
 
@@ -33,11 +30,7 @@ namespace Serilog.Sinks.Loki.Internal
 
             writer.Flush();
 
-            stream.Write(bufferWriter.WrittenMemory.Span);
-
-            _bufferOwner.Return(bufferWriter);
-
-            return Task.CompletedTask;
+            return stream.WriteAsync(bufferWriter.WrittenMemory).AsTask();
         }
 
         protected override bool TryComputeLength(out long length)

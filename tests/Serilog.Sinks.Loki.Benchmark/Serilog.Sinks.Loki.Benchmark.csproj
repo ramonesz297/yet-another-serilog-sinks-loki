@@ -1,15 +1,28 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<IncludeSymbols>true</IncludeSymbols>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DebugType>portable</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <DebugType>portable</DebugType>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+		<PackageReference Include="BenchmarkDotNet.Diagnostics.dotMemory" Version="0.14.0" />
 		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.14.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
+		<PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="17.13.35603.1" />
 		<PackageReference Include="Serilog.Sinks.Grafana.Loki" Version="8.3.0" />
 	</ItemGroup>
 
