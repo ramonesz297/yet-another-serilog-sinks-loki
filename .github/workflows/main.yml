@@ -14,11 +14,13 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: | 
             8.x
             9.x
+
       - uses: dotnet/nbgv@master
         with:
           setAllVars: true
@@ -30,6 +32,6 @@ jobs:
 
       - name: publish
         run: dotnet nuget push ./out/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{secrets.NUGET_ACCESS_TOKEN}} --skip-duplicate
-
+        
       - name: publish-to-github
         run: dotnet nuget push ./out/*.nupkg --source https://nuget.pkg.github.com/ramonesz297/index.json --api-key ${{secrets._GITHUB_PAT}} --skip-duplicate
