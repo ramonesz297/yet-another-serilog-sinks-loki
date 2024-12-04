@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
+using Serilog.Sinks.Grafana.Loki;
 
 
 namespace Serilog.Sinks.Loki.Benchmark
@@ -9,7 +10,8 @@ namespace Serilog.Sinks.Loki.Benchmark
         {
             Console.Write("LokiLogin: ");
             Console.WriteLine(Environment.GetEnvironmentVariable("LokiLogin"));
-            BenchmarkRunner.Run<LokiSinkBenchmark>();
+
+            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
         }
     }
 }

@@ -4,11 +4,21 @@ using System.Text.RegularExpressions;
 
 namespace Serilog.Sinks.Loki.Internal
 {
-    internal static class LokiHttpClientExtensions
+    internal static partial class LokiHttpClientExtensions
     {
         private const string _tenantHeader = "X-Scope-OrgID";
 
+#if NET7_0_OR_GREATER
+        [GeneratedRegex("@\"^[a-zA-Z0-9]*$\"")]
+        private static partial Regex TenantIdValueRegex();
+#else
+
         private static readonly Regex _tenantIdValueRegex = new(@"^[a-zA-Z0-9]*$");
+        private static Regex TenantIdValueRegex()
+        {
+            return _tenantIdValueRegex;
+        }
+#endif
 
         internal static void SetCredentials(this HttpClient httpClient, LokiCredentials? credentials)
         {
@@ -38,7 +48,7 @@ namespace Serilog.Sinks.Loki.Internal
                 return;
             }
 
-            if (!_tenantIdValueRegex.IsMatch(tenant))
+            if (!TenantIdValueRegex().IsMatch(tenant))
             {
                 throw new ArgumentException($"{tenant} argument does not follow rule for Tenant ID", nameof(tenant));
             }

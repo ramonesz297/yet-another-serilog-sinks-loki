@@ -1,6 +1,5 @@
 ﻿using Serilog.Configuration;
 using Serilog.Sinks.Loki.Internal;
-using Serilog.Sinks.PeriodicBatching;
 
 namespace Serilog.Sinks.Loki
 {
@@ -40,15 +39,19 @@ namespace Serilog.Sinks.Loki
         ///  </param>
         /// <param name="httpClient">Custom HttpClient instance</param>
         /// <param name="exceptionFormatter">Custom formatter for exceptions</param>
+        /// <param name="retryTimeLimit">The maximum time that the sink will keep retrying failed batches for. The default is ten minutes. Lower
+        /// this value to reduce buffering and backpressure in high-load scenarios.
+        /// </param>
         /// <returns></returns>
         public static LoggerConfiguration Loki(this LoggerSinkConfiguration loggerConfiguration,
-                                                   LokiSinkConfigurations configurations,
-                                                   int batchSizeLimit = 1000,
-                                                   TimeSpan? period = null,
-                                                   int queueLimit = 100000,
-                                                   bool eagerlyEmitFirstEvent = true,
-                                                   HttpClient? httpClient = null,
-                                                   ILokiExceptionFormatter? exceptionFormatter = null)
+                                               LokiSinkConfigurations configurations,
+                                               int batchSizeLimit = 1000,
+                                               TimeSpan? period = null,
+                                               int queueLimit = 100000,
+                                               bool eagerlyEmitFirstEvent = true,
+                                               HttpClient? httpClient = null,
+                                               ILokiExceptionFormatter? exceptionFormatter = null,
+                                               TimeSpan? retryTimeLimit = null)
         {
 
             ArgumentNullException.ThrowIfNull(configurations, nameof(configurations));
@@ -56,15 +59,16 @@ namespace Serilog.Sinks.Loki
             ArgumentNullException.ThrowIfNull(configurations.Labels, "configurations.Labels");
             ArgumentNullException.ThrowIfNull(configurations.PropertiesAsLabels, "configurations.PropertiesAsLabels");
 
-            var p = new PeriodicBatchingSink(new LokiSink(configurations, httpClient ?? new(), exceptionFormatter ?? new DefaultLokiExceptionFormatter()), new()
+            var sink = new LokiSink(configurations, httpClient ?? new(), exceptionFormatter ?? new DefaultLokiExceptionFormatter());
+
+            return loggerConfiguration.Sink(sink, new BatchingOptions()
             {
-                Period = period.GetValueOrDefault(TimeSpan.FromSeconds(2)),
+                BufferingTimeLimit = period.GetValueOrDefault(TimeSpan.FromSeconds(2)),
                 BatchSizeLimit = batchSizeLimit,
                 EagerlyEmitFirstEvent = eagerlyEmitFirstEvent,
                 QueueLimit = queueLimit,
+                RetryTimeLimit = retryTimeLimit.GetValueOrDefault(TimeSpan.FromMinutes(10))
             });
-
-            return loggerConfiguration.Sink(p);
         }
     }
 }

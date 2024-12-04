@@ -29,7 +29,7 @@ namespace Serilog.Sinks.Loki.Internal
                 return false;
             }
 
-            for (int i = 0; i < _configurations.PropertiesAsLabels.Length; i++)
+            for (int i = _configurations.PropertiesAsLabels.Length - 1; i >= 0; i--)
             {
                 var label = _configurations.PropertiesAsLabels[i];
 
@@ -68,7 +68,7 @@ namespace Serilog.Sinks.Loki.Internal
                 hasCode.Add(obj.Level);
             }
 
-            for (int i = 0; i < _configurations.PropertiesAsLabels.Length; i++)
+            for (int i = _configurations.PropertiesAsLabels.Length - 1; i >= 0; i--)
             {
                 var label = _configurations.PropertiesAsLabels[i];
                 if (obj.Properties.TryGetValue(label, out var x))

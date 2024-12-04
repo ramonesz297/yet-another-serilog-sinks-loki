@@ -1,18 +1,14 @@
-﻿using System.Diagnostics;
-using System.Reflection.Emit;
-using System.Text;
-using System.Text.Json;
-using Microsoft.VisualBasic;
-using Serilog.Events;
+﻿using Serilog.Events;
 using Serilog.Parsing;
 using Serilog.Sinks.Loki.Internal;
+using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
 
 namespace Serilog.Sinks.Loki.Tests
 {
     public class LokiMessageWriterTest : IDisposable
     {
-
-        private readonly PooledTextWriterAndByteBufferWriterOwner _pooledTextWriterAndByteBufferWriterOwner = new PooledTextWriterAndByteBufferWriterOwner();
 
         private readonly ILokiExceptionFormatter _defaultExceptionFormatter = new DefaultLokiExceptionFormatter();
 
@@ -29,7 +25,7 @@ namespace Serilog.Sinks.Loki.Tests
 
             LokiLogEventComparer comparer = new LokiLogEventComparer(configurations);
 
-            return new LokiMessageWriter(configurations, _pooledTextWriterAndByteBufferWriterOwner, comparer, _defaultExceptionFormatter);
+            return new LokiMessageWriter(configurations,  comparer, _defaultExceptionFormatter);
         }
 
         [Theory]
@@ -41,7 +37,7 @@ namespace Serilog.Sinks.Loki.Tests
         [InlineData(LogEventLevel.Fatal)]
         public Task Should_write_simple_log_message_without_parameters(LogEventLevel level)
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create();
 
@@ -60,7 +56,7 @@ namespace Serilog.Sinks.Loki.Tests
         [Fact]
         public Task Should_write_simple_log_message_with_global_lables()
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -90,7 +86,7 @@ namespace Serilog.Sinks.Loki.Tests
         [InlineData(null)]
         public Task Should_write_log_message_with_props_and_global_lables(object? scalarValue)
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -127,7 +123,7 @@ namespace Serilog.Sinks.Loki.Tests
         [Fact]
         public Task Should_write_logs_with_array_parameter()
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -151,7 +147,7 @@ namespace Serilog.Sinks.Loki.Tests
         [Fact]
         public Task Should_write_logs_with_object_parameter()
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -178,7 +174,7 @@ namespace Serilog.Sinks.Loki.Tests
         [Fact]
         public Task Should_write_logs_with_dictionary_parameter()
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -206,7 +202,7 @@ namespace Serilog.Sinks.Loki.Tests
         [Fact]
         public Task Should_write_logs_with_exception()
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -232,7 +228,7 @@ namespace Serilog.Sinks.Loki.Tests
         [Fact]
         public Task Should_aggregate_logs_by_lables()
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -257,7 +253,7 @@ namespace Serilog.Sinks.Loki.Tests
         [Fact]
         public Task Should_not_handle_log_level_as_lable()
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -280,7 +276,7 @@ namespace Serilog.Sinks.Loki.Tests
         [Fact]
         public Task Should_add_property_as_lable()
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -304,7 +300,7 @@ namespace Serilog.Sinks.Loki.Tests
         [Fact]
         public Task Should_add_property_out_of_message_template()
         {
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -329,7 +325,7 @@ namespace Serilog.Sinks.Loki.Tests
         public Task Should_enrich_span_and_trace_ids()
         {
 
-            using var bufferWriter = _pooledTextWriterAndByteBufferWriterOwner.RentBufferWriter();
+            using var bufferWriter = new PooledByteBufferWriter();
             using var jsonWriter = new Utf8JsonWriter(bufferWriter);
             var logWriter = Create(new LokiSinkConfigurations()
             {
@@ -353,7 +349,6 @@ namespace Serilog.Sinks.Loki.Tests
 
         public void Dispose()
         {
-            _pooledTextWriterAndByteBufferWriterOwner.Dispose();
         }
 
     }

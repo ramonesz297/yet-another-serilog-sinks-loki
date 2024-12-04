@@ -1,5 +1,5 @@
-﻿using System;
-using System.Buffers;
+﻿using System.Buffers;
+using System.Diagnostics;
 
 namespace Serilog.Sinks.Loki.Internal
 {
@@ -27,6 +27,7 @@ namespace Serilog.Sinks.Loki.Internal
 
         public ReadOnlyMemory<byte> WrittenMemory => _buffer.AsMemory(0, _index);
 
+        ///<inheritdoc/>
         public void Advance(int count)
         {
             _index += count;
@@ -40,10 +41,14 @@ namespace Serilog.Sinks.Loki.Internal
 
         public void Dispose()
         {
+            if (_buffer == null)
+            {
+                return;
+            }
+
             Clear();
             ArrayPool<byte>.Shared.Return(_buffer);
             _buffer = null!;
-            GC.SuppressFinalize(this);
         }
 
         public Memory<byte> GetMemory(int sizeHint = 256)
@@ -60,6 +65,8 @@ namespace Serilog.Sinks.Loki.Internal
 
         private void EnshureCapacity(int sizeHint)
         {
+            Debug.Assert(sizeHint > 0);
+
             var length = _buffer.Length;
 
             if (sizeHint <= length - _index)
@@ -72,14 +79,13 @@ namespace Serilog.Sinks.Loki.Internal
             int newSize = length + requiredLength;
 
             byte[] oldBuffer = _buffer;
+
             var oldBufferSpan = oldBuffer.AsSpan();
 
             _buffer = ArrayPool<byte>.Shared.Rent(newSize);
 
             oldBufferSpan.CopyTo(_buffer);
-
             oldBufferSpan.Clear();
-
             ArrayPool<byte>.Shared.Return(oldBuffer);
         }
     }
