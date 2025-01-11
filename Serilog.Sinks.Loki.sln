@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "misc", "misc", "{9F2FCAE3-4
 		Directory.Build.props = Directory.Build.props
 		LICENSE.txt = LICENSE.txt
 		README.md = README.md
+		.github\workflows\test.yml = .github\workflows\test.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SettingsConfigurations", "samples\SettingsConfigurations\SettingsConfigurations.csproj", "{83031237-A580-477E-B7F4-CCEFD1A6B3A2}"
