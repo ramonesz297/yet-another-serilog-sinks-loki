@@ -1,4 +1,8 @@
-﻿namespace Serilog.Sinks.Loki.Internal
+﻿// This file is part of the project licensed under the MIT License.
+// See the LICENSE file in the project root for more information.
+
+
+namespace Serilog.Sinks.Loki.Internal
 {
     internal static class DateTimeOffsetExtensions
     {

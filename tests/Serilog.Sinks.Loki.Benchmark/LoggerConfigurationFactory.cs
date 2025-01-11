@@ -1,4 +1,8 @@
-﻿using Serilog.Sinks.Grafana.Loki;
+﻿// This file is part of the project licensed under the MIT License.
+// See the LICENSE file in the project root for more information.
+
+
+using Serilog.Sinks.Grafana.Loki;
 using GrafanaLokiLabel = Serilog.Sinks.Grafana.Loki.LokiLabel;
 
 namespace Serilog.Sinks.Loki.Benchmark

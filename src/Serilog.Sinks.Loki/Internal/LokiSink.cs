@@ -1,4 +1,8 @@
-﻿using Serilog.Core;
+﻿// This file is part of the project licensed under the MIT License.
+// See the LICENSE file in the project root for more information.
+
+
+using Serilog.Core;
 using Serilog.Events;
 using System.Net.Http;
 

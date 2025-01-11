@@ -15,7 +15,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "misc", "misc", "{9F2FCAE3-4
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
 		LICENSE.txt = LICENSE.txt
+		.github\workflows\main.yml = .github\workflows\main.yml
 		README.md = README.md
+		Serilog.Sinks.Loki.sln.licenseheader = Serilog.Sinks.Loki.sln.licenseheader
 		.github\workflows\test.yml = .github\workflows\test.yml
 	EndProjectSection
 EndProject
