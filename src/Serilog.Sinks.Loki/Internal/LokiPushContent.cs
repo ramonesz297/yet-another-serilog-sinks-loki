@@ -1,5 +1,6 @@
 ﻿using Serilog.Events;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -29,8 +30,11 @@ namespace Serilog.Sinks.Loki.Internal
             _writer.Write(writer, _events);
 
             writer.Flush();
-
+#if NETCOREAPP
             return stream.WriteAsync(bufferWriter.WrittenMemory).AsTask();
+#else
+            return stream.WriteAsync(bufferWriter.Buffer, 0, bufferWriter.WrittenCount);
+#endif
         }
 
         protected override bool TryComputeLength(out long length)

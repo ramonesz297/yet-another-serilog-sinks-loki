@@ -37,13 +37,11 @@ namespace Serilog.Sinks.Loki.Internal
 
         public override void Write(bool value)
         {
-            ReadOnlySpan<byte> ut8Value = value ? "true"u8 : "false"u8;
+            EnsureCapacity(value ? 4 : 5);
 
-            EnsureCapacity(ut8Value.Length);
+            Utf8Formatter.TryFormat(value, Cursor, out var bytesWritten, 'l');
 
-            ut8Value.CopyTo(Cursor);
-
-            _index += ut8Value.Length;
+            _index += bytesWritten;
         }
 
         public override void Write(int value)
@@ -60,6 +58,7 @@ namespace Serilog.Sinks.Loki.Internal
         public override void Write(uint value)
         {
             const int maxLen = 10;
+
             EnsureCapacity(maxLen);
 
             Utf8Formatter.TryFormat(value, Cursor, out var bytesWritten);
@@ -70,6 +69,7 @@ namespace Serilog.Sinks.Loki.Internal
         public override void Write(long value)
         {
             const int maxLen = 20;
+
             EnsureCapacity(maxLen);
 
             Utf8Formatter.TryFormat(value, Cursor, out var bytesWritten);
@@ -112,7 +112,7 @@ namespace Serilog.Sinks.Loki.Internal
 
         public override void Write(char[] buffer, int index, int count)
         {
-            Write(buffer.AsSpan().Slice(index, count));
+            WriteCore(buffer.AsSpan().Slice(index, count));
         }
 
         public override void Write(decimal value)
@@ -126,6 +126,7 @@ namespace Serilog.Sinks.Loki.Internal
             _index += bytesWritten;
         }
 
+#if NETCOREAPP
 
         public override void Write(ReadOnlySpan<char> buffer)
         {
@@ -135,10 +136,11 @@ namespace Serilog.Sinks.Loki.Internal
 
             _index += Encoding.GetBytes(buffer, Cursor);
         }
+#endif
 
         public override void WriteLine()
         {
-            Write(Environment.NewLine.AsSpan());
+            Write(Environment.NewLine);
         }
 
 
@@ -149,20 +151,45 @@ namespace Serilog.Sinks.Loki.Internal
                 return;
             }
 
-            var maxLen = Encoding.GetByteCount(value);
+            WriteCore(value.AsSpan());
+        }
 
+        private void WriteCore(ReadOnlySpan<char> buffer)
+        {
+            if (buffer.IsEmpty)
+            {
+                return;
+            }
+
+#if NETCOREAPP
+            var maxLen = Encoding.GetByteCount(buffer);
             EnsureCapacity(maxLen);
+            _index += Encoding.GetBytes(buffer, Cursor);
+#else
+            unsafe
+            {
+                fixed (char* t = buffer)
+                {
+                    var maxLen = Encoding.GetByteCount(t, buffer.Length);
+                    EnsureCapacity(maxLen);
+                    Span<byte> dest = Cursor.Slice(0, maxLen);
 
-            _index += Encoding.GetBytes(value.AsSpan(), Cursor);
-
+                    fixed (byte* d = dest)
+                    {
+                        _index += Encoding.GetBytes(t, buffer.Length, d, dest.Length);
+                    }
+                }
+            }
+#endif
         }
 
         public override void Write(char[]? buffer)
         {
-            Write(buffer.AsSpan());
+            var source = buffer.AsSpan();
+            WriteCore(source);
         }
 
-
+#if NETCOREAPP
         public override void Write(StringBuilder? value)
         {
             if (value is null)
@@ -176,6 +203,7 @@ namespace Serilog.Sinks.Loki.Internal
             }
         }
 
+#endif
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -213,7 +241,8 @@ namespace Serilog.Sinks.Loki.Internal
 
         public override void Flush()
         {
-            FlushBuffer(0);
+            _pooledByteBufferWriter.Advance(_index);
+            _index = 0;
         }
 
         public override void Write(char value)
@@ -226,13 +255,8 @@ namespace Serilog.Sinks.Loki.Internal
             }
             else
             {
-                var maxLen = Encoding.GetByteCount([value]);
-                EnsureCapacity(maxLen);
-                _index += Encoding.GetBytes([value], Cursor);
+                WriteCore([value]);
             }
-
         }
-
-
     }
 }

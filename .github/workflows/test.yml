@@ -10,7 +10,7 @@ permissions:
     checks: write
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
 
       - uses: actions/setup-dotnet@v4

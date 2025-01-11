@@ -1,0 +1,6 @@
+@Serilog.Sinks.Loki.Benchmark.TestHost_HostAddress = http://localhost:5141
+
+GET {{Serilog.Sinks.Loki.Benchmark.TestHost_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

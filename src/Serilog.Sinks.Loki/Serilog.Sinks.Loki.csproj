@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<AssemblyName>Serilog.Sinks.Loki</AssemblyName>
-		<TargetFrameworks>net8.0;net9.0;</TargetFrameworks>
+		<TargetFrameworks>net481;netstandard2.0;net8.0;net9.0;</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<PackageIcon>logo_128_128.png</PackageIcon>
 		<Nullable>enable</Nullable>
@@ -13,8 +13,6 @@
 		<PackageTags>serilog;loki;grafana;net8;net9;</PackageTags>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
-		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-		<IsTrimmable>true</IsTrimmable>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<RepositoryUrl>https://github.com/ramonesz297/yet-another-serilog-sinks-loki</RepositoryUrl>
@@ -24,7 +22,10 @@
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
-	
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net8.0' or '$(TargetFramework)' == 'net9.0'">
+		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+		<IsTrimmable>true</IsTrimmable>
+	</PropertyGroup>
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 			<_Parameter1>$(AssemblyName).Tests</_Parameter1>
@@ -33,9 +34,16 @@
 			<_Parameter1>Serilog.Sinks.Loki.Benchmark</_Parameter1>
 		</AssemblyAttribute>
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<PackageReference Include="Serilog" Version="4.1.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net481'">
+		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+		<PackageReference Include="System.Text.Json" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Bcl.HashCode" Version="6.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

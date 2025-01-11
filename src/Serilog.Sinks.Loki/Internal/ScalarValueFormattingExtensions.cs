@@ -1,4 +1,6 @@
 ﻿using Serilog.Events;
+using System.Buffers;
+using System.Buffers.Text;
 using System.Text.Json;
 
 namespace Serilog.Sinks.Loki.Internal
@@ -7,22 +9,27 @@ namespace Serilog.Sinks.Loki.Internal
     {
         internal static void WriteAsValue(this ScalarValue scalarValue, Utf8JsonWriter writer)
         {
-            if (scalarValue.Value is null)
+            object? value = scalarValue.Value;
+
+            if (value is null)
             {
                 writer.WriteNullValue();
                 return;
             }
 
-            switch (scalarValue.Value)
+            switch (value)
             {
-                case int intValue:
-                    writer.WriteNumberValue(intValue);
+                case int:
+                case short:
+                case ushort:
+                case byte:
+                    writer.WriteNumberValue((int)value);
                     break;
-                case uint uintValue:
-                    writer.WriteNumberValue(uintValue);
+                case uint:
+                    writer.WriteNumberValue((uint)value);
                     break;
-                case string stringValue:
-                    writer.WriteStringValue(stringValue);
+                case string:
+                    writer.WriteStringValue((string)value);
                     break;
                 case float floatValue:
                     writer.WriteNumberValue(floatValue);
@@ -43,7 +50,7 @@ namespace Serilog.Sinks.Loki.Internal
                     writer.WriteStringValue(dateTimeOffsetValue);
                     break;
                 default:
-                    writer.WriteStringValue(scalarValue.Value.ToString());
+                    writer.WriteStringValue(value.ToString());
                     break;
             }
         }
@@ -57,22 +64,41 @@ namespace Serilog.Sinks.Loki.Internal
         /// <returns>returns <see langword="true"/> if value was written, otherwise - <see langword="false"/></returns>
         private static bool WriteAs(this ScalarValue scalarValue, Utf8JsonWriter writer, bool writeAsProperty)
         {
-            int count = GetCharsCount(scalarValue);
+            const int stackallocThreshold = 256;
 
-            if (count == -1)
+            object? value = scalarValue.Value;
+
+            if (value is null)
             {
-                if (scalarValue.Value is string stringValue)
-                {
-                    Write(writer, stringValue, writeAsProperty);
-                    return true;
-                }
-                else if (scalarValue.Value is object value)
-                {
-                    var stringToWrite = value.ToString();
-                    if (!string.IsNullOrEmpty(stringToWrite))
-                    {
-                        Write(writer, stringToWrite, writeAsProperty);
+                return false;
+            }
 
+            if (value is string stringValue)
+            {
+                Write(writer, stringValue.AsSpan(), writeAsProperty);
+                return true;
+            }
+            else
+            {
+                int count = GetCount(value);
+
+                if (count <= 0)
+                {
+                    Write(writer, value.ToString().AsSpan(), writeAsProperty);
+                    return false;
+                }
+
+                var maxLength = checked(count);
+
+                byte[]? rentedBuffer = null;
+
+                Span<byte> span = maxLength <= stackallocThreshold ? stackalloc byte[maxLength] : (rentedBuffer = ArrayPool<byte>.Shared.Rent(maxLength));
+
+                try
+                {
+                    if (TryFormat(value, span, out int charsWritten))
+                    {
+                        Write(writer, span.Slice(0, charsWritten), writeAsProperty);
                         return true;
                     }
                     else
@@ -80,39 +106,37 @@ namespace Serilog.Sinks.Loki.Internal
                         return false;
                     }
                 }
-                else
+                finally
                 {
-                    return false;
+                    if (rentedBuffer != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rentedBuffer);
+                    }
                 }
             }
-            else if (count == 0)
+        }
+
+        private static void Write(Utf8JsonWriter writer, ReadOnlySpan<char> data, bool writeAsProperty)
+        {
+            if (writeAsProperty)
             {
-                return false;
+                writer.WritePropertyName(data);
             }
             else
             {
-                Span<char> span = stackalloc char[count];
-                if (scalarValue.TryFormat(span, out int charsWritten))
-                {
-                    Write(writer, span.Slice(0, charsWritten), writeAsProperty);
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                writer.WriteStringValue(data);
             }
+        }
 
-            static void Write(Utf8JsonWriter writer, ReadOnlySpan<char> data, bool writeAsProperty)
+        private static void Write(Utf8JsonWriter writer, ReadOnlySpan<byte> data, bool writeAsProperty)
+        {
+            if (writeAsProperty)
             {
-                if (writeAsProperty)
-                {
-                    writer.WritePropertyName(data);
-                }
-                else
-                {
-                    writer.WriteStringValue(data);
-                }
+                writer.WritePropertyName(data);
+            }
+            else
+            {
+                writer.WriteStringValue(data);
             }
         }
 
@@ -126,81 +150,115 @@ namespace Serilog.Sinks.Loki.Internal
             return WriteAs(scalarValue, writer, true);
         }
 
-        internal static bool TryFormat(this ScalarValue scalarValue, Span<char> destination, out int charsWritten)
+        internal static bool TryFormat(object value, Span<byte> destination, out int bytesWritten)
         {
-            if (scalarValue.Value is null or string)
+            if (value is null or string)
             {
-                charsWritten = 0;
+                bytesWritten = 0;
                 return false;
             }
-
-
-            if (scalarValue.Value is int intValue)
+            if (value is byte _byte)
             {
-                return intValue.TryFormat(destination, out charsWritten);
+                return Utf8Formatter.TryFormat(_byte, destination, out bytesWritten);
             }
-            else if (scalarValue.Value is uint uintValue)
+            else if (value is short _short)
             {
-                return uintValue.TryFormat(destination, out charsWritten);
+                return Utf8Formatter.TryFormat(_short, destination, out bytesWritten);
             }
-            else if (scalarValue.Value is double doubleValue)
+            else if (value is short _ushort)
             {
-                return doubleValue.TryFormat(destination, out charsWritten);
+                return Utf8Formatter.TryFormat(_ushort, destination, out bytesWritten);
             }
-            else if (scalarValue.Value is float floatValue)
+            else if (value is bool _bool)
             {
-                return floatValue.TryFormat(destination, out charsWritten);
+                return Utf8Formatter.TryFormat(_bool, destination, out bytesWritten, 'l');
             }
-            else if (scalarValue.Value is decimal decimalValue)
+            else if (value is int _int)
             {
-                return decimalValue.TryFormat(destination, out charsWritten);
+                return Utf8Formatter.TryFormat(_int, destination, out bytesWritten);
             }
-            else if (scalarValue.Value is long longValue)
+            else if (value is uint _uint)
             {
-                return longValue.TryFormat(destination, out charsWritten);
+                return Utf8Formatter.TryFormat(_uint, destination, out bytesWritten);
             }
-            else if (scalarValue.Value is ulong ulongValue)
+            else if (value is long _long)
             {
-                return ulongValue.TryFormat(destination, out charsWritten);
+                return Utf8Formatter.TryFormat(_long, destination, out bytesWritten);
             }
-            else if (scalarValue.Value is bool booleanValue)
+            else if (value is ulong _ulong)
             {
-                if (booleanValue)
-                {
-                    "true".CopyTo(destination);
-                    charsWritten = 4;
-                    return true;
-                }
-                else
-                {
-                    "false".CopyTo(destination);
-                    charsWritten = 5;
-                    return true;
-                }
+                return Utf8Formatter.TryFormat(_ulong, destination, out bytesWritten);
             }
-            else if (scalarValue.Value is DateTimeOffset dateTimeOffsetValue)
+            else if (value is float _float)
             {
-                return dateTimeOffsetValue.TryFormat(destination, out charsWritten, "O");
+                return Utf8Formatter.TryFormat(_float, destination, out bytesWritten);
             }
-            else if (scalarValue.Value is DateTime dateTimeValue)
+            else if (value is Guid guid)
             {
-                return dateTimeValue.TryFormat(destination, out charsWritten, "O");
+                return Utf8Formatter.TryFormat(guid, destination, out bytesWritten);
+            }
+            else if (value is double _double)
+            {
+                return Utf8Formatter.TryFormat(_double, destination, out bytesWritten);
+            }
+            else if (value is decimal _decimal)
+            {
+                return Utf8Formatter.TryFormat(_decimal, destination, out bytesWritten);
+            }
+            else if (value is DateTimeOffset dateTimeOffset)
+            {
+                return Utf8Formatter.TryFormat(dateTimeOffset, destination, out bytesWritten, 'O');
+            }
+            else if (value is DateTime dateTime)
+            {
+                return Utf8Formatter.TryFormat(dateTime, destination, out bytesWritten, 'O');
+            }
+            else if (value is TimeSpan timeSpan)
+            {
+                return Utf8Formatter.TryFormat(timeSpan, destination, out bytesWritten);
             }
             else
             {
-                charsWritten = 0;
+                bytesWritten = 0;
                 return false;
             }
-
         }
-        internal static int GetCharsCount(ScalarValue scalarValue)
+
+        //internal static bool TryFormat(this ScalarValue scalarValue, Span<char> destination, out int charsWritten)
+        //{
+        //    if (scalarValue.Value is null or string)
+        //    {
+        //        charsWritten = 0;
+        //        return false;
+        //    }
+
+        //    if (scalarValue.Value is ISpanFormattable formattable)
+        //    {
+        //        ReadOnlySpan<char> format = scalarValue.Value switch
+        //        {
+        //            DateTimeOffset => "O",
+        //            DateTime => "O",
+        //            _ => default
+        //        };
+
+        //        return formattable.TryFormat(destination, out charsWritten, format, null);
+        //    }
+        //    else
+        //    {
+        //        charsWritten = 0;
+        //        return false;
+        //    }
+
+        //}
+
+        internal static int GetCount(object? value)
         {
-            if (scalarValue?.Value is null)
+            if (value is null)
             {
                 return 0;
             }
 
-            return scalarValue.Value switch
+            return value switch
             {
                 int => 11,
                 uint => 10,
@@ -208,13 +266,19 @@ namespace Serilog.Sinks.Loki.Internal
                 float => 33,
                 decimal => 22,
                 long => 20,
+                short => 6,
+                ushort => 5,
                 ulong => 20,
                 bool booleanValue => booleanValue ? 4 : 5,
                 DateTimeOffset => 36,
                 DateTime => 36,
+                TimeSpan => 26,
+                Guid => 36,
+                Enum => GetCount(Enum.GetUnderlyingType(value.GetType())),
                 _ => -1
             };
         }
+
 
 
     }

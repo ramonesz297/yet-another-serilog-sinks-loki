@@ -5,7 +5,7 @@ namespace Serilog.Sinks.Loki.Benchmark
 {
     public static class LoggerConfigurationFactory
     {
-        public static LoggerConfiguration Default(string uri)
+        public static LoggerConfiguration Serilog_Sinks_Grafana_Loki(string uri)
         {
             return new LoggerConfiguration()
                 .MinimumLevel.Verbose()
@@ -17,10 +17,17 @@ namespace Serilog.Sinks.Loki.Benchmark
                 {
                     Login = "login",
                     Password = "pass"
-                }, propertiesAsLabels: ["level"], period: TimeSpan.FromMilliseconds(500));
+                }, propertiesAsLabels: ["level"]);
         }
 
-        public static LoggerConfiguration Optimized(string uri)
+
+        public static LoggerConfiguration Empty(int batchSizeLimit = 100)
+        {
+            return new LoggerConfiguration()
+                .MinimumLevel.Verbose();
+        }
+
+        public static LoggerConfiguration YetAnotherLoki(string uri)
         {
             return new LoggerConfiguration()
                 .MinimumLevel.Verbose()
@@ -33,7 +40,7 @@ namespace Serilog.Sinks.Loki.Benchmark
                     [
                         new LokiLabel("app", "sinks2"),
                     ],
-                }, period: TimeSpan.FromMilliseconds(500));
+                });
         }
     }
 

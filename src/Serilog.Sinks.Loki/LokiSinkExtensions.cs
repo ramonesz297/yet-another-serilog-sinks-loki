@@ -1,5 +1,6 @@
 ﻿using Serilog.Configuration;
 using Serilog.Sinks.Loki.Internal;
+using System.Net.Http;
 
 namespace Serilog.Sinks.Loki
 {
@@ -53,11 +54,25 @@ namespace Serilog.Sinks.Loki
                                                ILokiExceptionFormatter? exceptionFormatter = null,
                                                TimeSpan? retryTimeLimit = null)
         {
+            if (configurations == null)
+            {
+                throw new ArgumentNullException(nameof(configurations));
+            }
 
-            ArgumentNullException.ThrowIfNull(configurations, nameof(configurations));
-            ArgumentNullException.ThrowIfNull(configurations.Url, "configurations.Url");
-            ArgumentNullException.ThrowIfNull(configurations.Labels, "configurations.Labels");
-            ArgumentNullException.ThrowIfNull(configurations.PropertiesAsLabels, "configurations.PropertiesAsLabels");
+            if (configurations.Url == null)
+            {
+                throw new ArgumentNullException("configurations.Url");
+            }
+
+            if (configurations.Labels == null)
+            {
+                throw new ArgumentNullException("configurations.Labels");
+            }
+
+            if (configurations.PropertiesAsLabels == null)
+            {
+                throw new ArgumentNullException("configurations.PropertiesAsLabels");
+            }
 
             var sink = new LokiSink(configurations, httpClient ?? new(), exceptionFormatter ?? new DefaultLokiExceptionFormatter());
 

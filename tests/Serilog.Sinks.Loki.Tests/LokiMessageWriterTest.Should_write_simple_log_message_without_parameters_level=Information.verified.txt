@@ -1,1 +1,15 @@
-﻿{"streams":[{"stream":{"level":"info"},"values":[["1609459200000000000","{\u0022Message\u0022:\u0022log wihout parameters\u0022,\u0022MessageTemplate\u0022:\u0022log wihout parameters\u0022}"]]}]}
+﻿{
+  "streams": [
+    {
+      "stream": {
+        "level": "info"
+      },
+      "values": [
+        [
+          "1609459200000000000",
+          "{\u0022Message\u0022:\u0022log wihout parameters\u0022,\u0022MessageTemplate\u0022:\u0022log wihout parameters\u0022}"
+        ]
+      ]
+    }
+  ]
+}

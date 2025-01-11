@@ -1,5 +1,6 @@
 ﻿using Serilog.Core;
 using Serilog.Events;
+using System.Net.Http;
 
 namespace Serilog.Sinks.Loki.Internal
 {
