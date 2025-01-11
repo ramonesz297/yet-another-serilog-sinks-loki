@@ -1,4 +1,8 @@
-﻿using System.Net.Http;
+﻿// This file is part of the project licensed under the MIT License.
+// See the LICENSE file in the project root for more information.
+
+
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;

@@ -1,4 +1,8 @@
-﻿using Serilog.Configuration;
+﻿// This file is part of the project licensed under the MIT License.
+// See the LICENSE file in the project root for more information.
+
+
+using Serilog.Configuration;
 using Serilog.Sinks.Loki.Internal;
 using System.Net.Http;
 

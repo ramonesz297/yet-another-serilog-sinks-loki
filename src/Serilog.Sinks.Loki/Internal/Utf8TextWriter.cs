@@ -1,4 +1,8 @@
-﻿using System.Buffers.Text;
+﻿// This file is part of the project licensed under the MIT License.
+// See the LICENSE file in the project root for more information.
+
+
+using System.Buffers.Text;
 using System.Text;
 
 namespace Serilog.Sinks.Loki.Internal

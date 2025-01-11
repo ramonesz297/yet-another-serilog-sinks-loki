@@ -1,4 +1,8 @@
-﻿using Serilog.Events;
+﻿// This file is part of the project licensed under the MIT License.
+// See the LICENSE file in the project root for more information.
+
+
+using Serilog.Events;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Serilog.Sinks.Loki.Internal
