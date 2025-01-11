@@ -1,5 +1,5 @@
 ﻿using Serilog.Events;
-using System.Runtime.CompilerServices;
+using System.Buffers.Text;
 using System.Text.Json;
 
 namespace Serilog.Sinks.Loki.Internal
@@ -23,6 +23,7 @@ namespace Serilog.Sinks.Loki.Internal
         private static readonly JsonEncodedText _error = JsonEncodedText.Encode("error");
         private static readonly JsonEncodedText _critical = JsonEncodedText.Encode("critical");
         private static readonly JsonEncodedText _unknown = JsonEncodedText.Encode("unknown");
+        private static readonly JsonEncodedText _type = JsonEncodedText.Encode("type");
 
         private readonly LokiSinkConfigurations _configurations;
         private readonly LokiLogEventComparer _comparer;
@@ -104,7 +105,7 @@ namespace Serilog.Sinks.Loki.Internal
                         //then we need to rename property name
                         else if (Array.Exists(_configurations.Labels, x => x.Key == label))
                         {
-                            WriteMaskedPropertyName(writer, label);
+                            writer.WritePropertyName($"_{label}");
                         }
                         else
                         {
@@ -120,23 +121,6 @@ namespace Serilog.Sinks.Loki.Internal
             }
 
             writer.WriteEndObject();
-
-            [SkipLocalsInit]
-            static void WriteMaskedPropertyName(Utf8JsonWriter writer, string propertyName)
-            {
-                //use stackallok only for small strings
-                if (propertyName.Length < 256)
-                {
-                    Span<char> chars = stackalloc char[propertyName.Length + 1];
-                    chars[0] = '_';
-                    propertyName.CopyTo(chars.Slice(1));
-                    writer.WritePropertyName(chars);
-                }
-                else
-                {
-                    writer.WritePropertyName($"_{propertyName}");
-                }
-            }
         }
 
         private static void WriteLogMessageStringValue(Utf8JsonWriter writer, LogEvent logEvent)
@@ -157,6 +141,9 @@ namespace Serilog.Sinks.Loki.Internal
                 writer.WritePropertyName(item.Name);
                 WritePropertyValue(writer, item.Value);
             }
+
+            if (structureValue.TypeTag != null)
+                writer.WriteString(_type, structureValue.TypeTag);
 
             writer.WriteEndObject();
         }
@@ -267,21 +254,26 @@ namespace Serilog.Sinks.Loki.Internal
         private void WriteLogs(Utf8JsonWriter writer, IEnumerable<LogEvent> events)
         {
             writer.WritePropertyName(_values);
+
             writer.WriteStartArray();
 
-            Span<char> buffer = stackalloc char[22];
+            Span<byte> buffer = stackalloc byte[25];
 
             foreach (var logEvent in events)
             {
                 writer.WriteStartArray();
 
-                logEvent.Timestamp.ToUnixNanoseconds().TryFormat(buffer, out var charsWritten);
+                var timestamp = logEvent.Timestamp.ToUnixNanoseconds();
+
+                Utf8Formatter.TryFormat(timestamp, buffer, out var charsWritten);
 
                 writer.WriteStringValue(buffer.Slice(0, charsWritten));
 
                 WriteLogMessageAsJson(writer, logEvent);
 
                 writer.WriteEndArray();
+
+                buffer.Clear();
             }
 
             writer.WriteEndArray();

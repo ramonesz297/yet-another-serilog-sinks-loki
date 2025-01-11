@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SettingsConfigurations", "s
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{2345A285-28C6-4A37-8745-225AF8E9CF77}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serilog.Sinks.Loki.Benchmark.TestHost", "tests\Serilog.Sinks.Loki.Benchmark.TestHost\Serilog.Sinks.Loki.Benchmark.TestHost.csproj", "{DA948CC4-CCD4-4490-93A4-F3B2F99BB617}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{83031237-A580-477E-B7F4-CCEFD1A6B3A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83031237-A580-477E-B7F4-CCEFD1A6B3A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{83031237-A580-477E-B7F4-CCEFD1A6B3A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA948CC4-CCD4-4490-93A4-F3B2F99BB617}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA948CC4-CCD4-4490-93A4-F3B2F99BB617}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA948CC4-CCD4-4490-93A4-F3B2F99BB617}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA948CC4-CCD4-4490-93A4-F3B2F99BB617}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -52,6 +58,7 @@ Global
 		{FCBEA524-FAE6-4730-AD6B-72BE7B44C1F6} = {88F910B1-B108-4842-8C00-33D28D62DF63}
 		{5B3E4A21-DA31-40FB-AF22-EDD04EADD7A3} = {88F910B1-B108-4842-8C00-33D28D62DF63}
 		{83031237-A580-477E-B7F4-CCEFD1A6B3A2} = {2345A285-28C6-4A37-8745-225AF8E9CF77}
+		{DA948CC4-CCD4-4490-93A4-F3B2F99BB617} = {88F910B1-B108-4842-8C00-33D28D62DF63}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {ABAA45AA-6659-40C6-A56C-0D88FE12DA73}

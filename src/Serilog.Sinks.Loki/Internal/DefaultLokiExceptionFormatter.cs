@@ -9,10 +9,18 @@ namespace Serilog.Sinks.Loki.Internal
         private static readonly JsonEncodedText _source = JsonEncodedText.Encode("Source");
         private static readonly JsonEncodedText _stackTrace = JsonEncodedText.Encode("StackTrace");
         private static readonly JsonEncodedText _innerException = JsonEncodedText.Encode("InnerException");
+
         public void Format(Utf8JsonWriter writer, Exception exception)
         {
-            ArgumentNullException.ThrowIfNull(writer, nameof(writer));
-            ArgumentNullException.ThrowIfNull(exception, nameof(exception));
+            if (writer == null)
+            {
+                throw new ArgumentNullException(nameof(writer));
+            }
+
+            if (exception == null)
+            {
+                throw new ArgumentNullException(nameof(exception));
+            }
 
             writer.WriteStartObject();
 

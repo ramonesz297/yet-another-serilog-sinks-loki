@@ -59,7 +59,7 @@ namespace Serilog.Sinks.Loki.Internal
             return true;
         }
 
-        public int GetHashCode([DisallowNull] LogEvent obj)
+        public int GetHashCode(LogEvent obj)
         {
             var hasCode = new HashCode();
 

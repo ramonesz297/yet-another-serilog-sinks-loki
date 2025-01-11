@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "Banchmarking",
+    "Projects": [
+      {
+        "Path": "tests\\Serilog.Sinks.Loki.Benchmark\\Serilog.Sinks.Loki.Benchmark.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "tests\\Serilog.Sinks.Loki.Benchmark.TestHost\\Serilog.Sinks.Loki.Benchmark.TestHost.csproj",
+        "Action": "StartWithoutDebugging"
+      }
+    ]
+  }
+]

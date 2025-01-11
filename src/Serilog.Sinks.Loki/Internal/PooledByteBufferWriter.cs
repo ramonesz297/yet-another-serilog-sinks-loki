@@ -11,7 +11,9 @@ namespace Serilog.Sinks.Loki.Internal
     /// implementation taken from System.Text.Json.PooledByteBufferWriter
     /// </para>
     /// <para>
+    /// This file includes code from the following repository:
     /// <see href="https://github.com/dotnet/runtime/blob/72db600a20d581fdc6776edce1863bcf8da0b1cd/src/libraries/Common/src/System/Text/Json/PooledByteBufferWriter.cs"/>
+    /// The original code is licensed under the MIT License.
     /// </para>
     /// </summary>
     internal sealed class PooledByteBufferWriter : IBufferWriter<byte>, IDisposable
@@ -26,6 +28,10 @@ namespace Serilog.Sinks.Loki.Internal
         }
 
         public ReadOnlyMemory<byte> WrittenMemory => _buffer.AsMemory(0, _index);
+
+        public byte[] Buffer => _buffer;
+
+        public int WrittenCount => _index;
 
         ///<inheritdoc/>
         public void Advance(int count)

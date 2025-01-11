@@ -1,1 +1,17 @@
-﻿{"streams":[{"stream":{"level":"error","label1":"value1","label2":"value2"},"values":[["1609459200000000000","{\u0022Message\u0022:\u0022log with error\u0022,\u0022MessageTemplate\u0022:\u0022log with error\u0022,\u0022Exception\u0022:{\u0022Type\u0022:\u0022System.InvalidOperationException\u0022,\u0022Message\u0022:\u0022Message from exception\u0022,\u0022StackTrace\u0022:null,\u0022InnerException\u0022:{\u0022Type\u0022:\u0022System.InvalidOperationException\u0022,\u0022Message\u0022:\u0022Message from inner exception\u0022,\u0022StackTrace\u0022:null}}}"]]}]}
+﻿{
+  "streams": [
+    {
+      "stream": {
+        "level": "error",
+        "label1": "value1",
+        "label2": "value2"
+      },
+      "values": [
+        [
+          "1609459200000000000",
+          "{\u0022Message\u0022:\u0022log with error\u0022,\u0022MessageTemplate\u0022:\u0022log with error\u0022,\u0022Exception\u0022:{\u0022Type\u0022:\u0022System.InvalidOperationException\u0022,\u0022Message\u0022:\u0022Message from exception\u0022,\u0022StackTrace\u0022:null,\u0022InnerException\u0022:{\u0022Type\u0022:\u0022System.InvalidOperationException\u0022,\u0022Message\u0022:\u0022Message from inner exception\u0022,\u0022StackTrace\u0022:null}}}"
+        ]
+      ]
+    }
+  ]
+}

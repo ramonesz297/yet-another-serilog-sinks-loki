@@ -5,7 +5,7 @@ using System.Text;
 namespace Serilog.Sinks.Loki.Tests
 {
 
-    public class Utf8TextWriterTests
+    public class Utf8TextWriterTests : IDisposable
     {
 
         private readonly PooledByteBufferWriter _pooledByteBufferWriter = new PooledByteBufferWriter();
@@ -15,7 +15,6 @@ namespace Serilog.Sinks.Loki.Tests
         {
             _writer = new(_pooledByteBufferWriter);
         }
-
 
         private string GetWrittenString()
         {
@@ -139,7 +138,7 @@ namespace Serilog.Sinks.Loki.Tests
             Assert.Equal(sb.ToString(), GetWrittenString());
         }
 
-
+#if NETCOREAPP
         [Fact]
         public void Should_write_span_of_char()
         {
@@ -149,6 +148,7 @@ namespace Serilog.Sinks.Loki.Tests
 
             Assert.Equal("span_of_chars", GetWrittenString());
         }
+#endif
 
 
         [Fact]
@@ -168,6 +168,12 @@ namespace Serilog.Sinks.Loki.Tests
             var text = expected.ToCharArray();
             _writer.Write(text);
             Assert.Equal(expected, GetWrittenString());
+        }
+
+        public void Dispose()
+        {
+            _pooledByteBufferWriter.Dispose();
+            _writer.Dispose();
         }
     }
 }
