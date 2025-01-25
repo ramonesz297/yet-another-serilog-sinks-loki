@@ -14,7 +14,7 @@ namespace Serilog.Sinks.Loki.Internal
         private const string _tenantHeader = "X-Scope-OrgID";
 
 #if NET7_0_OR_GREATER
-        [GeneratedRegex("@\"^[a-zA-Z0-9]*$\"")]
+        [GeneratedRegex("^[a-zA-Z0-9]*$")]
         private static partial Regex TenantIdValueRegex();
 #else
 
