@@ -7,7 +7,11 @@
       "values": [
         [
           "1609459200000000000",
-          "{\u0022Message\u0022:\u0022log wihout parameters\u0022,\u0022MessageTemplate\u0022:\u0022log wihout parameters\u0022,\u0022TraceId\u0022:\u0022ed4ad863e4913c6183f28453ebac18e4\u0022,\u0022SpanId\u0022:\u0022effd9f82dde27762\u0022}"
+          "log wihout parameters",
+          {
+            "TraceId": "ed4ad863e4913c6183f28453ebac18e4",
+            "SpanId": "effd9f82dde27762"
+          }
         ]
       ]
     }

@@ -9,7 +9,10 @@
       "values": [
         [
           "1609459200000000000",
-          "{\u0022Message\u0022:\u0022log with parameters 45\u0022,\u0022MessageTemplate\u0022:\u0022log with parameters {Item}\u0022,\u0022Item\u0022:45}"
+          "log with parameters 45",
+          {
+            "Item": "45"
+          }
         ]
       ]
     }

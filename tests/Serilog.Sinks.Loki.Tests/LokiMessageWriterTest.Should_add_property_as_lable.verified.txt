@@ -8,7 +8,10 @@
       "values": [
         [
           "1609459200000000000",
-          "{\u0022Message\u0022:\u0022log #1.1\u0022,\u0022MessageTemplate\u0022:\u0022log #1.1\u0022,\u0022userId\u0022:1}"
+          "log #1.1",
+          {
+            "userId": "1"
+          }
         ]
       ]
     }

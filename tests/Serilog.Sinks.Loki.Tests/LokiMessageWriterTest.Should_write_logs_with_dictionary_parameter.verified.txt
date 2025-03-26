@@ -9,7 +9,11 @@
       "values": [
         [
           "1609459200000000000",
-          "{\u0022Message\u0022:\u0022log with dictionary parameters [(\\u0022Key1\\u0022: \\u0022value1\\u0022), (\\u0022Key2\\u0022: 42)]\u0022,\u0022MessageTemplate\u0022:\u0022log with dictionary parameters {Item}\u0022,\u0022Item\u0022:{\u0022Key1\u0022:\u0022value1\u0022,\u0022Key2\u0022:42}}"
+          "log with dictionary parameters [(\u0022Key1\u0022: \u0022value1\u0022), (\u0022Key2\u0022: 42)]",
+          {
+            "Item__Key1": "value1",
+            "Item__Key2": "42"
+          }
         ]
       ]
     }

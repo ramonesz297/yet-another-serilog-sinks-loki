@@ -136,121 +136,98 @@ namespace Serilog.Sinks.Loki.Internal
             writer.WriteStringValue(tw.WrittenMemory.Span);
         }
 
-        private static void WriteStructuredValue(Utf8JsonWriter writer, StructureValue structureValue)
+        private static void WriteStructuredValue(string propertyName, Utf8JsonWriter writer, StructureValue structureValue)
         {
-            writer.WriteStartObject();
-
             foreach (var item in structureValue.Properties)
             {
-                writer.WritePropertyName(item.Name);
-                WritePropertyValue(writer, item.Value);
+                var newPropertyName = $"{propertyName}__{item.Name}";
+                WriteProperty(newPropertyName, writer, item.Value);
             }
-
-            if (structureValue.TypeTag != null)
-                writer.WriteString(_type, structureValue.TypeTag);
-
-            writer.WriteEndObject();
         }
 
-        private static void WriteSequenceValue(Utf8JsonWriter writer, SequenceValue sequence)
+        private static void WriteSequenceValue(string propertyName, Utf8JsonWriter writer, SequenceValue sequence)
         {
-            writer.WriteStartArray();
-
+            var i = 0;
             foreach (var item in sequence.Elements)
             {
-                WritePropertyValue(writer, item);
+                var newPropertyName = $"{propertyName}__{i++}";
+                WriteProperty(newPropertyName, writer, item);
             }
-
-            writer.WriteEndArray();
         }
 
-        private static void WriteDictionaryValue(Utf8JsonWriter writer, DictionaryValue value)
+        private static void WriteDictionaryValue(string propertyName, Utf8JsonWriter writer, DictionaryValue value)
         {
             if (value.Elements is null)
             {
-                writer.WriteNullValue();
+                writer.WritePropertyName(propertyName);
+                writer.WriteStringValue("<null>");
                 return;
             }
 
-            writer.WriteStartObject();
-
             foreach (var item in value.Elements)
             {
-                if (item.Key.WriteAsPropertyName(writer))
-                {
-                    WritePropertyValue(writer, item.Value);
-                }
+                var key = $"{propertyName}__{item.Key.Value!.ToString()}";
+                WriteProperty(key, writer, item.Value);
             }
-
-            writer.WriteEndObject();
         }
 
-        private static void WritePropertyValue(Utf8JsonWriter writer, LogEventPropertyValue? value)
+        private static void WriteProperty(string propertyName, Utf8JsonWriter writer, LogEventPropertyValue? value)
         {
             switch (value)
             {
                 case null:
-                    writer.WriteNullValue();
+                    writer.WritePropertyName(propertyName);
+                    writer.WriteStringValue("<null>");
                     break;
                 case ScalarValue scalarValue:
-                    scalarValue.WriteAsValue(writer);
+                    writer.WritePropertyName(propertyName);
+                    scalarValue.WriteAsNonNullableStringValue(writer);
                     break;
                 case DictionaryValue dictionaryValue:
-                    WriteDictionaryValue(writer, dictionaryValue);
+                    WriteDictionaryValue(propertyName, writer, dictionaryValue);
                     break;
                 case SequenceValue sequenceValue:
-                    WriteSequenceValue(writer, sequenceValue);
+                    WriteSequenceValue(propertyName, writer, sequenceValue);
                     break;
                 case StructureValue structureValue:
-                    WriteStructuredValue(writer, structureValue);
+                    WriteStructuredValue(propertyName, writer, structureValue);
                     break;
                 default:
-                    writer.WriteStringValue(value.ToString());
+                    writer.WritePropertyName(propertyName);
+                    writer.WriteStringValue(value?.ToString() ?? "<null>");
                     break;
             }
         }
 
         private void WriteLogMessageAsJson(Utf8JsonWriter destination, LogEvent logEvent)
         {
-            using var byteBufferWriter = new PooledByteBufferWriter();
-            using var writer = new Utf8JsonWriter(byteBufferWriter);
+            WriteLogMessageStringValue(destination, logEvent);
 
-            writer.WriteStartObject();
-
-            writer.WritePropertyName(_message);
-
-            WriteLogMessageStringValue(writer, logEvent);
-
-            writer.WriteString(_messageTemplate, logEvent.MessageTemplate.Text);
+            destination.WriteStartObject();
 
             if (logEvent.Exception is not null)
             {
-                writer.WritePropertyName(_exception);
-                _exceptionFormatter.Format(writer, logEvent.Exception);
+                _exceptionFormatter.Format(destination, logEvent.Exception);
             }
 
             if (_configurations.EnrichTraceId && logEvent.TraceId.HasValue)
             {
-                writer.WriteString(_traceId, logEvent.TraceId.Value.ToString());
+                destination.WriteString(_traceId, logEvent.TraceId.Value.ToString());
             }
 
             if (_configurations.EnrichSpanId && logEvent.SpanId.HasValue)
             {
-                writer.WriteString(_spanId, logEvent.SpanId.Value.ToString());
+                destination.WriteString(_spanId, logEvent.SpanId.Value.ToString());
             }
 
             foreach (var item in logEvent.Properties)
             {
-                writer.WritePropertyName(item.Key);
-
-                WritePropertyValue(writer, item.Value);
+                WriteProperty(item.Key, destination, item.Value);
             }
 
-            writer.WriteEndObject();
+            destination.WriteEndObject();
 
-            writer.Flush();
-
-            destination.WriteStringValue(byteBufferWriter.WrittenMemory.Span);
+            destination.Flush();
         }
 
 

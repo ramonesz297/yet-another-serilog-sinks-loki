@@ -60,6 +60,79 @@ namespace Serilog.Sinks.Loki.Internal
         }
 
         /// <summary>
+        /// writes scalar value as string
+        /// </summary>
+        /// <param name="scalarValue">Scalar value</param>
+        /// <param name="writer">Output json writer</param>
+        /// <returns>returns <see langword="true"/> if value was written, otherwise - <see langword="false"/></returns>
+        internal static bool WriteAsString(this ScalarValue scalarValue, Utf8JsonWriter writer)
+        {
+            const int stackallocThreshold = 256;
+
+            object? value = scalarValue.Value;
+
+            if (value is null)
+            {
+                return false;
+            }
+
+            if (value is string stringValue)
+            {
+                writer.WriteStringValue(stringValue.AsSpan());
+                return true;
+            }
+            else
+            {
+                int count = GetCount(value);
+
+                if (count <= 0)
+                {
+                    writer.WriteStringValue(value.ToString().AsSpan());
+                    return true;
+                }
+
+                var maxLength = checked(count);
+
+                byte[]? rentedBuffer = null;
+
+                Span<byte> span = maxLength <= stackallocThreshold ? stackalloc byte[maxLength] : (rentedBuffer = ArrayPool<byte>.Shared.Rent(maxLength));
+
+                try
+                {
+                    if (TryFormat(value, span, out int charsWritten))
+                    {
+                        writer.WriteStringValue(span.Slice(0, charsWritten));
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                finally
+                {
+                    if (rentedBuffer != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rentedBuffer);
+                    }
+                }
+            }
+        }
+
+        internal static void WriteAsNonNullableStringValue(this ScalarValue scalarValue, Utf8JsonWriter writer)
+        {
+            object? value = scalarValue.Value;
+
+            if (value is null)
+            {
+                writer.WriteStringValue("<null>");
+                return;
+            }
+
+            WriteAsString(scalarValue, writer);
+        }
+
+        /// <summary>
         /// writes scalar value as property name or as value
         /// </summary>
         /// <param name="scalarValue">Scalar value</param>
@@ -268,8 +341,8 @@ namespace Serilog.Sinks.Loki.Internal
                 uint => 10,
                 double => 33,
                 float => 33,
-                decimal => 22,
-                long => 20,
+                decimal => 31,
+                long => 21,
                 short => 6,
                 ushort => 5,
                 ulong => 20,
