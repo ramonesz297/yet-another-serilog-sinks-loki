@@ -36,9 +36,9 @@ namespace Serilog.Sinks.Loki.Tests
         {
             var logWriter = Create();
             var mtp = _messageTemplateParser;
-            var messmtpageTemplate = _messageTemplateParser.Parse("log wihout parameters");
+            var messageTemplate = _messageTemplateParser.Parse("log without parameters");
 
-            var log = new LogEvent(_date, LogEventLevel.Debug, null, messmtpageTemplate, []);
+            var log = new LogEvent(_date, LogEventLevel.Debug, null, messageTemplate, []);
             var log1_1 = new LogEvent(_date, LogEventLevel.Information, null, mtp.Parse("log #1.1"), []);
             var log1_2 = new LogEvent(_date, LogEventLevel.Information, null, mtp.Parse("log #1.2"), []);
             var log2_1 = new LogEvent(_date, LogEventLevel.Debug, null, mtp.Parse("log #2.1"), []);
