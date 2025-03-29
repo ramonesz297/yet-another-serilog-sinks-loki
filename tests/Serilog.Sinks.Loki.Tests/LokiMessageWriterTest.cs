@@ -5,7 +5,6 @@
 using Serilog.Events;
 using Serilog.Parsing;
 using Serilog.Sinks.Loki.Internal;
-using System.Buffers;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
