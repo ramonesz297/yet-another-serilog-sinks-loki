@@ -6,18 +6,18 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<PackageIcon>logo_128_128.png</PackageIcon>
 		<Nullable>enable</Nullable>
-		<Authors>ramonesz297</Authors>
+		<Authors>ramonesz297;kYann</Authors>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<LangVersion>latest</LangVersion>
-		<PackageId>Serilog.Sinks.Loki.YetAnother</PackageId>
+		<PackageId>Bump.Serilog.Sinks.Loki.YetAnother</PackageId>
 		<PackageTags>serilog;loki;grafana;net8;net9;</PackageTags>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<RepositoryUrl>https://github.com/ramonesz297/yet-another-serilog-sinks-loki</RepositoryUrl>
-		<PackageProjectUrl>https://github.com/ramonesz297/yet-another-serilog-sinks-loki</PackageProjectUrl>
-		<Description>A Serilog sink for Grafana Loki. With spanId and traceId support!</Description>
+		<RepositoryUrl>https://github.com/bump-charge/yet-another-serilog-sinks-loki</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/bump-charge/yet-another-serilog-sinks-loki</PackageProjectUrl>
+		<Description>A Serilog sink for Grafana Loki. With spanId, traceId and structured metadata support!</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>

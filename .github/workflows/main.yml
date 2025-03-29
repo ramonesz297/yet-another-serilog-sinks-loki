@@ -5,7 +5,7 @@ on:
     types: [published]
   push:
     branches:
-      - master
+      - bump-structured-metadata
 
 jobs:
   publish:
@@ -33,8 +33,8 @@ jobs:
       - name: pack
         run: dotnet pack ./src/Serilog.Sinks.Loki/Serilog.Sinks.Loki.csproj -c Release -o out --include-symbols --include-source -p:Version=$NBGV_SemVer2
 
-      - name: publish
-        run: dotnet nuget push ./out/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{secrets.NUGET_ACCESS_TOKEN}} --skip-duplicate
+      # - name: publish
+      #   run: dotnet nuget push ./out/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{secrets.NUGET_ACCESS_TOKEN}} --skip-duplicate
         
       - name: publish-to-github
-        run: dotnet nuget push ./out/*.nupkg --source https://nuget.pkg.github.com/ramonesz297/index.json --api-key ${{secrets._GITHUB_PAT}} --skip-duplicate
+        run: dotnet nuget push ./out/*.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{secrets._GITHUB_TOKEN}} --skip-duplicate
