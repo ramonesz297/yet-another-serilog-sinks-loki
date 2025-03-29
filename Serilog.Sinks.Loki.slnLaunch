@@ -4,7 +4,7 @@
     "Projects": [
       {
         "Path": "tests\\Serilog.Sinks.Loki.Benchmark\\Serilog.Sinks.Loki.Benchmark.csproj",
-        "Action": "Start"
+        "Action": "StartWithoutDebugging"
       },
       {
         "Path": "tests\\Serilog.Sinks.Loki.Benchmark.TestHost\\Serilog.Sinks.Loki.Benchmark.TestHost.csproj",
