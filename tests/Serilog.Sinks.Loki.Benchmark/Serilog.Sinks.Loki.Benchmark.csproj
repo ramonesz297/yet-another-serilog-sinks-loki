@@ -22,7 +22,7 @@
 		<PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
 		<PackageReference Include="BenchmarkDotNet.Diagnostics.dotMemory" Version="0.14.0" />
 		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.14.0" />
-		<PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="17.13.35603.1" />
+		<PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="17.13.35606.1" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
 		<PackageReference Include="Serilog.Sinks.Grafana.Loki" Version="8.3.0" />
 	</ItemGroup>

@@ -11,6 +11,7 @@ using System.Text.Json;
 
 namespace Serilog.Sinks.Loki.Tests
 {
+
     public class LokiMessageWriterTest : IDisposable
     {
         private static readonly DateTimeOffset _date = new(2021, 1, 1, 0, 0, 0, TimeSpan.Zero);
