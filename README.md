@@ -1,5 +1,17 @@
 # Serilog.Sinks.Loki.YetAnother
 
+A performance-oriented [Serilog](https://serilog.net/) sink that sends log events to [Grafana Loki](https://grafana.com/oss/loki/) using the HTTP push API. Designed to minimize memory allocations and GC pressure, making it a great fit for high-throughput .NET applications.
+
+## Features
+
+- **Low allocation design** — writes JSON directly to a UTF-8 stream via `Utf8JsonWriter` and pooled buffers instead of intermediate strings
+- **Broad framework support** — targets `net481`, `netstandard2.0`, `net8.0`, `net9.0`, and `net10.0`
+- **Batching with back-pressure** — configurable batch size, period, queue limit, and retry policy
+- **Distributed tracing** — optional `TraceId` / `SpanId` enrichment from `LogEvent` context
+- **Flexible labeling** — global static labels, property-to-label promotion, and automatic log-level labels
+- **Multi-tenant support** — set the `X-Scope-OrgID` header per sink via the `Tenant` property
+- **Custom exception formatting** — plug in your own `ILokiExceptionFormatter` implementation
+- **Serilog.Settings.Configuration** — full support for `appsettings.json`-based setup
 
 ## Installation
 
@@ -7,169 +19,229 @@
 dotnet add package Serilog.Sinks.Loki.YetAnother
 ```
 
-## Features
+Or add a `PackageReference` directly:
 
-- netstandard2.0 support (sinse v3.0.0)
-- Batching support
-- trace and span id support
-- customizable Exception formatting
-- Serilog.Settings.Configuration integration
-
-
-
-## Example
-
-```csharp
-
-    Log.Logger = new LoggerConfiguration()
-          .WriteTo.Loki(new LokiSinkConfigurations()
-          {
-              Credentials = new LokiCredentials("< login here >", "< password here >"),
-              Url = new Uri("< uri to loki server here >"),
-              HandleLogLevelAsLabel = true, // adds Serilog.Events.LogEvent.Level as label (default is true)
-              PropertiesAsLabels = ["userId"], // adds Serilog.Events.LogEvent.Properties as labels (default is empty)
-              Labels = //global labels, will be added to each loki log message (default is empty)
-              [
-                  new LokiLabel("app", "loki"),
-              ]
-          },
-          batchSizeLimit: 1000, //The maximum number of events to include in a single batch (default is 1000)
-          period: TimeSpan.FromMilliseconds(2000), // period between sending batches to loki (default is 2000ms)
-          queueLimit: 100000, //Maximum number of events to hold in the sink's internal queue, or null for an unbounded queue
-          httpClient: null) // custom HttpClient instance, (can be used to set proxy, compression etc)
-          .CreateLogger();
-
+```xml
+<PackageReference Include="Serilog.Sinks.Loki.YetAnother" Version="*" />
 ```
 
-## Using Serilog.Settings.Configurations
+## Quick Start
 
+```csharp
+using Serilog;
+using Serilog.Sinks.Loki;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Loki(new LokiSinkConfigurations
+    {
+        Url = new Uri("https://loki.example.com"),
+        Labels =
+        [
+            new LokiLabel("app", "my-service"),
+            new LokiLabel("environment", "production"),
+        ]
+    })
+    .CreateLogger();
+
+Log.Information("Hello from {App}!", "my-service");
+```
+
+## Configuration Reference
+
+### Sink Parameters
+
+These are passed directly to `.WriteTo.Loki(...)`:
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `configurations` | `LokiSinkConfigurations` | *required* | Core sink settings (see table below) |
+| `batchSizeLimit` | `int` | `1000` | Maximum number of events in a single batch |
+| `period` | `TimeSpan` | `2 seconds` | Time between batch flush attempts |
+| `queueLimit` | `int` | `100000` | Maximum events held in the internal queue. When full, new events are dropped |
+| `eagerlyEmitFirstEvent` | `bool` | `true` | Flush immediately when the first event arrives (useful during debugging) |
+| `httpClient` | `HttpClient?` | `null` | Supply your own `HttpClient` for proxy, compression, or custom headers |
+| `exceptionFormatter` | `ILokiExceptionFormatter?` | `null` | Custom exception formatter (falls back to the built-in recursive formatter) |
+| `retryTimeLimit` | `TimeSpan` | `10 minutes` | How long the sink retries a failed batch before discarding it |
+
+### `LokiSinkConfigurations` Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Url` | `Uri` | *required* | Base URL of the Loki server |
+| `Labels` | `LokiLabel[]` | `[]` | Global labels added to every log stream |
+| `Credentials` | `LokiCredentials?` | `null` | Basic-auth username and password |
+| `PropertiesAsLabels` | `string[]` | `[]` | Log event property names to promote to Loki labels. **Matching is case-sensitive.** |
+| `HandleLogLevelAsLabel` | `bool` | `true` | Add the Serilog `Level` as a `level` label |
+| `Tenant` | `string?` | `null` | When set, an `X-Scope-OrgID` header is sent with every request |
+| `EnrichTraceId` | `bool` | `false` | Include `TraceId` from `LogEvent.TraceId` in the JSON payload |
+| `EnrichSpanId` | `bool` | `false` | Include `SpanId` from `LogEvent.SpanId` in the JSON payload |
+
+### Programmatic Setup (all options)
+
+```csharp
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Loki(new LokiSinkConfigurations
+    {
+        Url = new Uri("https://loki.example.com"),
+        Credentials = new LokiCredentials("username", "password"),
+        HandleLogLevelAsLabel = true,
+        PropertiesAsLabels = ["userId"],
+        Labels =
+        [
+            new LokiLabel("app", "my-service"),
+        ],
+        Tenant = "team-a",
+        EnrichTraceId = true,
+        EnrichSpanId = true,
+    },
+    batchSizeLimit: 500,
+    period: TimeSpan.FromSeconds(2),
+    queueLimit: 50_000,
+    eagerlyEmitFirstEvent: true,
+    retryTimeLimit: TimeSpan.FromMinutes(5))
+    .CreateLogger();
+```
+
+### Serilog.Settings.Configuration (appsettings.json)
 
 #### appsettings.json
-```json
 
+```json
 {
   "Serilog": {
-    "Using": [ "Serilog.Sinks.Loki" ],
+    "Using": ["Serilog.Sinks.Loki"],
     "WriteTo": [
       {
         "Name": "Loki",
         "Args": {
           "configurations": {
-            "Url": "https://logs-prod42.grafana.net",
+            "Url": "https://loki.example.com",
             "Labels": [
-              {
-                "key": "app",
-                "value": "myapp"
-              }
+              { "key": "app", "value": "my-service" }
             ],
             "Credentials": {
-              "Password": "password",
-              "Username": "username"
+              "Username": "username",
+              "Password": "password"
             },
-            "PropertiesAsLabels": [
-              "app",
-              "environment"
-            ],
-            "HandleLogLevelAsLabel": false,
-            "EnrichTraceId": true, //enrich log with TraceId 
-            "EnrichSpanId": true //enrich log with SpanId 
+            "PropertiesAsLabels": ["app", "environment"],
+            "HandleLogLevelAsLabel": true,
+            "EnrichTraceId": true,
+            "EnrichSpanId": true,
+            "Tenant": "team-a"
           },
-          "batchSizeLimit": 999
+          "batchSizeLimit": 500
         }
       }
     ]
   }
 }
-
 ```
 
 #### Program.cs
-```csharp
 
+```csharp
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-var builder = new ConfigurationBuilder()
-    .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"))
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
     .Build();
 
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder)
+    .ReadFrom.Configuration(configuration)
     .CreateLogger();
-
-
 ```
 
-## Benchmarks
+> A runnable sample project is available under [`samples/SettingsConfigurations`](samples/SettingsConfigurations).
 
+## Advanced Usage
+
+### Custom HttpClient
+
+Supply your own `HttpClient` to configure proxies, compression, timeouts, or custom headers:
+
+```csharp
+var httpClient = new HttpClient(new HttpClientHandler
+{
+    Proxy = new WebProxy("http://proxy.example.com:8080"),
+    AutomaticDecompression = DecompressionMethods.GZip,
+});
+httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Loki(new LokiSinkConfigurations
+    {
+        Url = new Uri("https://loki.example.com"),
+    },
+    httpClient: httpClient)
+    .CreateLogger();
 ```
 
-BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4602/23H2/2023Update/SunValley3)
-Intel Core i5-14600K, 1 CPU, 20 logical and 14 physical cores
-  [Host]                        : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
-  ShortRun-.NET 9.0             : .NET 9.0.0 (9.0.24.52809), X64 RyuJIT AVX2
-  ShortRun-.NET Framework 4.8.1 : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+> **Note:** When you supply your own `HttpClient`, you are responsible for its lifecycle (disposal).
 
-IterationCount=3  LaunchCount=1  WarmupCount=3
+### Custom Exception Formatting
 
+Implement `ILokiExceptionFormatter` to control how exceptions are serialized:
+
+```csharp
+public class SimpleExceptionFormatter : ILokiExceptionFormatter
+{
+    public void Format(Utf8JsonWriter writer, Exception exception)
+    {
+        writer.WriteStringValue($"{exception.GetType().Name}: {exception.Message}");
+    }
+}
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Loki(new LokiSinkConfigurations
+    {
+        Url = new Uri("https://loki.example.com"),
+    },
+    exceptionFormatter: new SimpleExceptionFormatter())
+    .CreateLogger();
 ```
 
-| Method                     | Runtime              | Count | Mean           | Ratio | Gen0       | Gen1       | Gen2       | Allocated    | Alloc Ratio |
-|--------------------------- |--------------------- |------ |---------------:|------:|-----------:|-----------:|-----------:|-------------:|------------:|
-| Serilog_Sinks_Grafana_Loki | .NET 9.0  | 50    | 2,053,614.2 us | 0.995 |          - |          - |          - |  16774.91 KB |       19.11 |
-| Empty                      | .NET 9.0  | 50    |       246.1 us | 0.000 |    55.1758 |     1.7090 |          - |    678.69 KB |        0.77 |
-| YetAnotherLoki             | .NET 9.0  | 50    | 2,063,304.4 us | 1.000 |          - |          - |          - |    877.98 KB |        1.00 |
-|                            |           |       |                |       |            |            |            |              |             |
-| Serilog_Sinks_Grafana_Loki | .NF 4.8.1 | 50    |    22,956.5 us |  1.96 |  2750.0000 |  1750.0000 |   781.2500 |  21138.92 KB |        4.47 |
-| Empty                      | .NF 4.8.1 | 50    |       587.0 us |  0.05 |   110.3516 |     3.9063 |     0.9766 |     682.4 KB |        0.14 |
-| YetAnotherLoki             | .NF 4.8.1 | 50    |    11,752.9 us |  1.00 |   718.7500 |   640.6250 |   515.6250 |   4728.41 KB |        1.00 |
-|                            |           |       |                |       |            |            |            |              |             |
-| Serilog_Sinks_Grafana_Loki | .NET 9.0  | 100   | 2,059,045.6 us | 1.009 |  1000.0000 |          - |          - |  33492.23 KB |       19.73 |
-| Empty                      | .NET 9.0  | 100   |       492.2 us | 0.000 |   109.3750 |          - |          - |   1349.08 KB |        0.79 |
-| YetAnotherLoki             | .NET 9.0  | 100   | 2,040,266.7 us | 1.000 |          - |          - |          - |   1697.38 KB |        1.00 |
-|                            |           |       |                |       |            |            |            |              |             |
-| Serilog_Sinks_Grafana_Loki | .NF 4.8.1 | 100   |    36,404.6 us |  1.43 |  4571.4286 |  1571.4286 |  1000.0000 |  44212.28 KB |        3.83 |
-| Empty                      | .NF 4.8.1 | 100   |     1,183.1 us |  0.05 |   218.7500 |     7.8125 |     1.9531 |   1354.86 KB |        0.12 |
-| YetAnotherLoki             | .NF 4.8.1 | 100   |    25,843.7 us |  1.02 |  1200.0000 |  1066.6667 |   800.0000 |  11548.38 KB |        1.00 |
-|                            |           |       |                |       |            |            |            |              |             |
-| Serilog_Sinks_Grafana_Loki | .NET 9.0  | 1000  | 2,296,610.2 us | 1.059 | 18000.0000 | 10000.0000 |  3000.0000 | 350725.77 KB |       21.40 |
-| Empty                      | .NET 9.0  | 1000  |     4,877.4 us | 0.002 |  1093.7500 |    31.2500 |          - |  13415.25 KB |        0.82 |
-| YetAnotherLoki             | .NET 9.0  | 1000  | 2,169,810.6 us | 1.000 |  1000.0000 |          - |          - |  16389.55 KB |        1.00 |
-|                            |           |       |                |       |            |            |            |              |             |
-| Serilog_Sinks_Grafana_Loki | .NF 4.8.1 | 1000  |   418,773.4 us |  1.28 | 46000.0000 | 16000.0000 |  8000.0000 | 488816.86 KB |        3.38 |
-| Empty                      | .NF 4.8.1 | 1000  |    11,611.0 us |  0.04 |  2187.5000 |    46.8750 |    15.6250 |     13458 KB |        0.09 |
-| YetAnotherLoki             | .NF 4.8.1 | 1000  |   327,267.6 us |  1.00 |  4000.0000 |  2000.0000 |  1000.0000 | 144823.27 KB |        1.00 |
-|                            |           |       |                |       |            |            |            |              |             |
-| Serilog_Sinks_Grafana_Loki | .NET 9.0  | 2000  | 2,511,604.7 us | 1.092 | 37000.0000 | 23000.0000 |  6000.0000 | 701410.65 KB |       21.44 |
-| Empty                      | .NET 9.0  | 2000  |     9,679.5 us | 0.004 |  2187.5000 |    46.8750 |          - |  26822.43 KB |        0.82 |
-| YetAnotherLoki             | .NET 9.0  | 2000  | 2,299,254.5 us | 1.000 |  2000.0000 |  1000.0000 |          - |  32714.22 KB |        1.00 |
-|                            |           |       |                |       |            |            |            |              |             |
-| Serilog_Sinks_Grafana_Loki | .NF 4.8.1 | 2000  |   764,830.3 us |  1.21 | 85000.0000 | 28000.0000 | 10000.0000 | 977264.74 KB |        3.39 |
-| Empty                      | .NF 4.8.1 | 2000  |    23,820.7 us |  0.04 |  4375.0000 |    62.5000 |    31.2500 |  26903.93 KB |        0.09 |
-| YetAnotherLoki             | .NF 4.8.1 | 2000  |   636,940.6 us |  1.01 | 11000.0000 |  7000.0000 |  5000.0000 | 288599.45 KB |        1.00 |
+## Label Strategy
 
-## TODO
- 
- - improve documentation
- - add more examples
- - add more tests
+Loki indexes labels, not log content. Choosing the right labels is critical for query performance and cluster health.
 
-## I know there are already a few Serilog Loki sinks out there, why another one?
+**Do:**
+- Use a small, fixed set of labels (e.g., `app`, `environment`, `level`).
+- Promote log properties to labels only when their cardinality is low and bounded.
 
-Widly used loki sinks are good and work as expected. But if app produces a lot of logs, in the future this might allocate a lot of objects.
+**Avoid:**
+- High-cardinality values as labels (user IDs, request IDs, trace IDs). These should stay in the log message JSON and be queried with LogQL filters.
+- Adding many labels — Loki performs best with fewer than ~15 labels per stream.
 
-This sink is designed to use less memory and allocate less objects. 
+`PropertiesAsLabels` matching is **case-sensitive** — `"userId"` will only match a property named exactly `userId`.
 
-The main idea is to use `Utf8JsonWriter` to write logs directly to the stream.
+## Troubleshooting
 
-Moreover, to decrease GC pressure, and memory allocation, it uses custom TextWriter, that writes message directly to the ut8 stream,
-instead of usual way - StringWriter. 
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| No logs appear in Loki | Incorrect `Url` or network connectivity | Verify the Loki push endpoint is reachable from the application host |
+| `401 Unauthorized` | Missing or wrong credentials | Check `Credentials` username/password; verify basic auth is enabled on the Loki gateway |
+| Logs are delayed or missing under load | Queue full — events are dropped when `queueLimit` is exceeded | Increase `queueLimit`, decrease `period`, or increase `batchSizeLimit` |
+| Retries consuming memory | Default `retryTimeLimit` is 10 minutes | Lower `retryTimeLimit` for high-load scenarios to reduce buffering |
+| Labels not appearing | Property name casing mismatch in `PropertiesAsLabels` | Ensure the property name matches exactly (case-sensitive) |
+| Multi-tenant header not sent | `Tenant` not set | Set the `Tenant` property on `LokiSinkConfigurations` |
 
-This approach allows to decrease number of allocations and its avg size, and decrease number of GC cycles as well.
+## Why Another Loki Sink?
 
-As the result, you can send more logs with less drawbacks.
+Widely used Loki sinks work well, but under high log volume they allocate many intermediate objects, increasing GC pressure.
 
+This sink is designed from the ground up for low memory overhead:
+
+- **`Utf8JsonWriter`** writes log events directly to the HTTP request stream — no intermediate `string` or `StringBuilder` allocations.
+- **Custom `TextWriter`** renders Serilog message templates straight into the UTF-8 stream, bypassing the usual `StringWriter` path.
+- **Pooled buffers** reuse memory across batches, reducing both allocation count and average allocation size.
+
+The result: fewer GC cycles and lower memory footprint, especially at scale.
 
 ## Inspiration and Credits
 
 - [Serilog.Sinks.Grafana.Loki](https://github.com/serilog-contrib/serilog-sinks-grafana-loki)
+
+## License
+
+This project is licensed under the [MIT License](LICENSE.txt).

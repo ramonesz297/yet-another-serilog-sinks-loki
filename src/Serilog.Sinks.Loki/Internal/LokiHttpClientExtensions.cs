@@ -1,7 +1,6 @@
 ﻿// This file is part of the project licensed under the MIT License.
 // See the LICENSE file in the project root for more information.
 
-
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -18,7 +17,7 @@ namespace Serilog.Sinks.Loki.Internal
         private static partial Regex TenantIdValueRegex();
 #else
 
-        private static readonly Regex _tenantIdValueRegex = new(@"^[a-zA-Z0-9]*$");
+        private static readonly Regex _tenantIdValueRegex = new("^[a-zA-Z0-9]*$");
         private static Regex TenantIdValueRegex()
         {
             return _tenantIdValueRegex;

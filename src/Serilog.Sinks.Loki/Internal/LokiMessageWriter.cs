@@ -1,9 +1,9 @@
 ﻿// This file is part of the project licensed under the MIT License.
 // See the LICENSE file in the project root for more information.
 
-
 using Serilog.Events;
 using System.Buffers.Text;
+using System.Globalization;
 using System.Text.Json;
 
 namespace Serilog.Sinks.Loki.Internal
@@ -131,7 +131,7 @@ namespace Serilog.Sinks.Loki.Internal
         {
             using var bf = new PooledByteBufferWriter();
             using var tw = new Utf8TextWriter(bf);
-            logEvent.RenderMessage(tw);
+            logEvent.RenderMessage(tw, CultureInfo.InvariantCulture);
             tw.Flush();
             writer.WriteStringValue(tw.WrittenMemory.Span);
         }
@@ -252,8 +252,6 @@ namespace Serilog.Sinks.Loki.Internal
 
             destination.WriteStringValue(byteBufferWriter.WrittenMemory.Span);
         }
-
-
 
         private void WriteLogs(Utf8JsonWriter writer, IEnumerable<LogEvent> events)
         {

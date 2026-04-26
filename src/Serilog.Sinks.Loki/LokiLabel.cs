@@ -1,7 +1,6 @@
 ﻿// This file is part of the project licensed under the MIT License.
 // See the LICENSE file in the project root for more information.
 
-
 namespace Serilog.Sinks.Loki
 {
     /// <summary>
@@ -48,7 +47,6 @@ namespace Serilog.Sinks.Loki
         {
             return Equals(obj as LokiLabel);
         }
-
 
         /// <inheritdoc/>
         public bool Equals(LokiLabel? other)

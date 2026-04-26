@@ -1,7 +1,6 @@
 ﻿// This file is part of the project licensed under the MIT License.
 // See the LICENSE file in the project root for more information.
 
-
 using Serilog.Sinks.Loki.Internal;
 using System.Globalization;
 using System.Text;
@@ -12,7 +11,7 @@ namespace Serilog.Sinks.Loki.Tests
     public class Utf8TextWriterTests : IDisposable
     {
 
-        private readonly PooledByteBufferWriter _pooledByteBufferWriter = new PooledByteBufferWriter();
+        private readonly PooledByteBufferWriter _pooledByteBufferWriter = new();
         private readonly Utf8TextWriter _writer;
 
         public Utf8TextWriterTests()
@@ -34,9 +33,9 @@ namespace Serilog.Sinks.Loki.Tests
         {
             _writer.Write(value);
 
-            Assert.Equal(value.ToString().ToLower(), GetWrittenString());
+            Assert.Equal(value.ToString(CultureInfo.InvariantCulture).ToLower(
+                CultureInfo.InvariantCulture), GetWrittenString());
         }
-
 
         [Theory]
         [InlineData(0)]
@@ -47,9 +46,8 @@ namespace Serilog.Sinks.Loki.Tests
         {
             _writer.Write(value);
 
-            Assert.Equal(value.ToString(), GetWrittenString());
+            Assert.Equal(value.ToString(CultureInfo.InvariantCulture), GetWrittenString());
         }
-
 
         [Theory]
         [InlineData(0u)]
@@ -59,7 +57,7 @@ namespace Serilog.Sinks.Loki.Tests
         {
             _writer.Write(value);
 
-            Assert.Equal(value.ToString(), GetWrittenString());
+            Assert.Equal(value.ToString(CultureInfo.InvariantCulture), GetWrittenString());
         }
 
         [Theory]
@@ -71,7 +69,7 @@ namespace Serilog.Sinks.Loki.Tests
         {
             _writer.Write(value);
 
-            Assert.Equal(value.ToString(), GetWrittenString());
+            Assert.Equal(value.ToString(CultureInfo.InvariantCulture), GetWrittenString());
         }
 
         [Theory]
@@ -81,9 +79,8 @@ namespace Serilog.Sinks.Loki.Tests
         {
             _writer.Write(value);
 
-            Assert.Equal(value.ToString(), GetWrittenString());
+            Assert.Equal(value.ToString(CultureInfo.InvariantCulture), GetWrittenString());
         }
-
 
         [Theory]
         [InlineData(0)]
@@ -107,17 +104,15 @@ namespace Serilog.Sinks.Loki.Tests
             Assert.Equal(value.ToString(CultureInfo.InvariantCulture), GetWrittenString());
         }
 
-
         [Fact]
         public void Should_write_decimal()
         {
-            decimal value = Decimal.MaxValue;
+            decimal value = decimal.MaxValue;
 
             _writer.Write(value);
 
             Assert.Equal(value.ToString(CultureInfo.InvariantCulture), GetWrittenString());
         }
-
 
         [Fact]
         public void Should_write_char_array()
@@ -154,7 +149,6 @@ namespace Serilog.Sinks.Loki.Tests
         }
 #endif
 
-
         [Fact]
         public void Should_write_new_line()
         {
@@ -178,6 +172,7 @@ namespace Serilog.Sinks.Loki.Tests
         {
             _pooledByteBufferWriter.Dispose();
             _writer.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

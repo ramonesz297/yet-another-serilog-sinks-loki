@@ -1,7 +1,6 @@
 ﻿// This file is part of the project licensed under the MIT License.
 // See the LICENSE file in the project root for more information.
 
-
 using Serilog.Events;
 
 namespace Serilog.Sinks.Loki
@@ -41,21 +40,20 @@ namespace Serilog.Sinks.Loki
         public bool HandleLogLevelAsLabel { get; set; } = true;
 
         /// <summary>
-        /// Loki tenant name. When provided <code>X-Scope-OrgID</code> header will be added to each request
+        /// Loki tenant name. When provided <c>X-Scope-OrgID</c> header will be added to each request
         /// </summary>
         public string? Tenant { get; set; }
 
         /// <summary>
-        /// if <see langword="true"/> then <see cref="LogEvent.TraceId"/> from will be added to each log event 
+        /// if <see langword="true"/> then <see cref="LogEvent.TraceId"/> from will be added to each log event
         /// as 'TraceId' json property
         /// </summary>
-        public bool EnrichTraceId { get; set; } = false;
+        public bool EnrichTraceId { get; set; }
 
         /// <summary>
-        /// if <see langword="true"/> then <see cref="LogEvent.SpanId"/> from will be added to each log event 
+        /// if <see langword="true"/> then <see cref="LogEvent.SpanId"/> from will be added to each log event
         /// as 'SpanId' json property
         /// </summary>
-        public bool EnrichSpanId { get; set; } = false;
-
+        public bool EnrichSpanId { get; set; }
     }
 }
