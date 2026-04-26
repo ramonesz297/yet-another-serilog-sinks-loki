@@ -21,64 +21,60 @@ namespace Serilog.Sinks.Loki.Internal
     /// </summary>
     internal sealed class PooledByteBufferWriter : IBufferWriter<byte>, IDisposable
     {
-        private byte[] _buffer;
-
-        private int _index;
-
         internal PooledByteBufferWriter(int initialCapacity = 256)
         {
-            _buffer = ArrayPool<byte>.Shared.Rent(initialCapacity);
+            Buffer = ArrayPool<byte>.Shared.Rent(initialCapacity);
         }
 
-        public ReadOnlyMemory<byte> WrittenMemory => _buffer.AsMemory(0, _index);
+        public ReadOnlyMemory<byte> WrittenMemory => Buffer.AsMemory(0, WrittenCount);
 
-        public byte[] Buffer => _buffer;
+        public byte[] Buffer { get; private set; }
 
-        public int WrittenCount => _index;
+        public int WrittenCount { get; private set; }
 
         ///<inheritdoc/>
         public void Advance(int count)
         {
-            _index += count;
+            WrittenCount += count;
         }
 
         public void Clear()
         {
-            _index = 0;
-            _buffer.AsSpan().Clear();
+            WrittenCount = 0;
+            Buffer.AsSpan().Clear();
         }
 
         public void Dispose()
         {
-            if (_buffer == null)
+            if (Buffer == null)
             {
                 return;
             }
 
             Clear();
-            ArrayPool<byte>.Shared.Return(_buffer);
-            _buffer = null!;
+            ArrayPool<byte>.Shared.Return(Buffer);
+            Buffer = null!;
         }
 
         public Memory<byte> GetMemory(int sizeHint = 256)
         {
             EnshureCapacity(sizeHint);
-            return _buffer.AsMemory(_index);
+            return Buffer.AsMemory(WrittenCount);
         }
 
         public Span<byte> GetSpan(int sizeHint = 256)
         {
             EnshureCapacity(sizeHint);
-            return _buffer.AsSpan(_index);
+            return Buffer.AsSpan(WrittenCount);
         }
 
         private void EnshureCapacity(int sizeHint)
         {
             Debug.Assert(sizeHint > 0);
 
-            var length = _buffer.Length;
+            var length = Buffer.Length;
 
-            if (sizeHint <= length - _index)
+            if (sizeHint <= length - WrittenCount)
             {
                 return;
             }
@@ -87,13 +83,13 @@ namespace Serilog.Sinks.Loki.Internal
 
             int newSize = length + requiredLength;
 
-            byte[] oldBuffer = _buffer;
+            byte[] oldBuffer = Buffer;
 
             var oldBufferSpan = oldBuffer.AsSpan();
 
-            _buffer = ArrayPool<byte>.Shared.Rent(newSize);
+            Buffer = ArrayPool<byte>.Shared.Rent(newSize);
 
-            oldBufferSpan.CopyTo(_buffer);
+            oldBufferSpan.CopyTo(Buffer);
             oldBufferSpan.Clear();
             ArrayPool<byte>.Shared.Return(oldBuffer);
         }

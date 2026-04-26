@@ -1,7 +1,6 @@
 ﻿// This file is part of the project licensed under the MIT License.
 // See the LICENSE file in the project root for more information.
 
-
 using Serilog.Configuration;
 using Serilog.Sinks.Loki.Internal;
 using System.Net.Http;
@@ -22,8 +21,8 @@ namespace Serilog.Sinks.Loki
         ///         {
         ///                Credentials = new LokiCredentials("login here ", "password here "),
         ///                Url = new Uri("uri to loki server here"),
-        ///                PropertiesAsLabels = ["userId"], 
-        ///                Labels = 
+        ///                PropertiesAsLabels = ["userId"],
+        ///                Labels =
         ///                [
         ///                    new LokiLabel("app", "loki"),
         ///                ]

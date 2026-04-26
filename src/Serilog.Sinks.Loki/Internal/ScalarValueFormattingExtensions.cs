@@ -1,7 +1,6 @@
 // This file is part of the project licensed under the MIT License.
 // See the LICENSE file in the project root for more information.
 
-
 using Serilog.Events;
 using System.Buffers;
 using System.Buffers.Text;
@@ -26,7 +25,7 @@ namespace Serilog.Sinks.Loki.Internal
                 case short:
                 case ushort:
                 case byte:
-                    writer.WriteNumberValue(Convert.ToInt32(value));
+                    writer.WriteNumberValue(Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture));
                     break;
                 case int:
                     writer.WriteNumberValue((int)value);
@@ -98,7 +97,7 @@ namespace Serilog.Sinks.Loki.Internal
 
                 byte[]? rentedBuffer = null;
 
-                Span<byte> span = maxLength <= stackallocThreshold ? stackalloc byte[maxLength] : (rentedBuffer = ArrayPool<byte>.Shared.Rent(maxLength));
+                var span = maxLength <= stackallocThreshold ? stackalloc byte[maxLength] : (rentedBuffer = ArrayPool<byte>.Shared.Rent(maxLength));
 
                 try
                 {
@@ -156,7 +155,7 @@ namespace Serilog.Sinks.Loki.Internal
             return WriteAs(scalarValue, writer, true);
         }
 
-        internal static bool TryFormat(object value, Span<byte> destination, out int bytesWritten)
+        private static bool TryFormat(object value, Span<byte> destination, out int bytesWritten)
         {
             if (value is null or string)
             {
@@ -229,35 +228,7 @@ namespace Serilog.Sinks.Loki.Internal
                 return false;
             }
         }
-
-        //internal static bool TryFormat(this ScalarValue scalarValue, Span<char> destination, out int charsWritten)
-        //{
-        //    if (scalarValue.Value is null or string)
-        //    {
-        //        charsWritten = 0;
-        //        return false;
-        //    }
-
-        //    if (scalarValue.Value is ISpanFormattable formattable)
-        //    {
-        //        ReadOnlySpan<char> format = scalarValue.Value switch
-        //        {
-        //            DateTimeOffset => "O",
-        //            DateTime => "O",
-        //            _ => default
-        //        };
-
-        //        return formattable.TryFormat(destination, out charsWritten, format, null);
-        //    }
-        //    else
-        //    {
-        //        charsWritten = 0;
-        //        return false;
-        //    }
-
-        //}
-
-        internal static int GetCount(object? value)
+        private static int GetCount(object? value)
         {
             if (value is null)
             {
@@ -284,8 +255,5 @@ namespace Serilog.Sinks.Loki.Internal
                 _ => -1
             };
         }
-
-
-
     }
 }

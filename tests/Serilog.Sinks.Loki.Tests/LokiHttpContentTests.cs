@@ -1,7 +1,6 @@
 ﻿// This file is part of the project licensed under the MIT License.
 // See the LICENSE file in the project root for more information.
 
-
 using Serilog.Events;
 using Serilog.Parsing;
 using Serilog.Sinks.Loki.Internal;
@@ -21,12 +20,12 @@ namespace Serilog.Sinks.Loki.Tests
         {
             configurations ??= new LokiSinkConfigurations();
 
-            LokiLogEventComparer comparer = new LokiLogEventComparer(configurations);
+            var comparer = new LokiLogEventComparer(configurations);
 
             return new LokiMessageWriter(configurations, comparer, _defaultExceptionFormatter);
         }
 
-        private string StringifyJsonPayload(MemoryStream stream)
+        private static string StringifyJsonPayload(MemoryStream stream)
         {
             return Encoding.UTF8.GetString(stream.ToArray());
         }
@@ -46,7 +45,11 @@ namespace Serilog.Sinks.Loki.Tests
 
             using var ms = new MemoryStream();
             var content = LokiPushContent.Create(logWriter, [log, log1_1, log1_2, log2_1, log2_2]);
+#pragma warning disable IDE0079
+#pragma warning disable xUnit1051
             await content.CopyToAsync(ms);
+#pragma warning restore xUnit1051
+#pragma warning restore IDE0079
             var r = StringifyJsonPayload(ms);
             await Verify(r);
         }

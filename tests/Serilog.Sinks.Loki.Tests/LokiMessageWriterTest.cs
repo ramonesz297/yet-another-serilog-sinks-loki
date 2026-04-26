@@ -1,7 +1,6 @@
 ﻿// This file is part of the project licensed under the MIT License.
 // See the LICENSE file in the project root for more information.
 
-
 using Serilog.Events;
 using Serilog.Parsing;
 using Serilog.Sinks.Loki.Internal;
@@ -20,8 +19,8 @@ namespace Serilog.Sinks.Loki.Tests
 
         private readonly MessageTemplateParser _messageTemplateParser = new();
 
-        private PooledByteBufferWriter _bufferWriter;
-        private Utf8JsonWriter _jsonWriter;
+        private readonly PooledByteBufferWriter _bufferWriter;
+        private readonly Utf8JsonWriter _jsonWriter;
 
         public LokiMessageWriterTest()
         {
@@ -38,7 +37,7 @@ namespace Serilog.Sinks.Loki.Tests
         {
             configurations ??= new LokiSinkConfigurations();
 
-            LokiLogEventComparer comparer = new LokiLogEventComparer(configurations);
+            var comparer = new LokiLogEventComparer(configurations);
 
             return new LokiMessageWriter(configurations, comparer, _defaultExceptionFormatter);
         }
@@ -64,7 +63,6 @@ namespace Serilog.Sinks.Loki.Tests
 
             return Verify(StringifyJsonPayload()).UseParameters(level);
         }
-
 
         [Fact]
         public Task Should_write_simple_log_message_with_global_lables()
@@ -130,8 +128,6 @@ namespace Serilog.Sinks.Loki.Tests
             return Verify(StringifyJsonPayload()).UseParameters(stringValue);
         }
 
-
-
         [Fact]
         public Task Should_write_logs_with_array_parameter()
         {
@@ -153,9 +149,6 @@ namespace Serilog.Sinks.Loki.Tests
 
             return Verify(StringifyJsonPayload());
         }
-
-
-
 
         [Theory]
         [InlineData(null)]
@@ -234,7 +227,6 @@ namespace Serilog.Sinks.Loki.Tests
             return Verify(StringifyJsonPayload());
         }
 
-
         [Fact]
         public Task Should_aggregate_logs_by_lables()
         {
@@ -256,7 +248,6 @@ namespace Serilog.Sinks.Loki.Tests
 
             return Verify(StringifyJsonPayload());
         }
-
 
         [Fact]
         public Task Should_not_handle_log_level_as_lable()
@@ -322,7 +313,6 @@ namespace Serilog.Sinks.Loki.Tests
             return Verify(StringifyJsonPayload());
         }
 
-
         [Fact]
         public Task Should_enrich_span_and_trace_ids()
         {
@@ -350,7 +340,7 @@ namespace Serilog.Sinks.Loki.Tests
         {
             _bufferWriter.Dispose();
             _jsonWriter.Dispose();
+            GC.SuppressFinalize(this);
         }
-
     }
 }

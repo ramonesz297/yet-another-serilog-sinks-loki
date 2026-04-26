@@ -1,16 +1,14 @@
 ﻿// This file is part of the project licensed under the MIT License.
 // See the LICENSE file in the project root for more information.
 
-
 using Serilog.Events;
 using Serilog.Sinks.Loki.Internal;
 
 namespace Serilog.Sinks.Loki.Tests
 {
-
     public class LokiLabelComparerTests
     {
-        private readonly LokiSinkConfigurations _configurations = new LokiSinkConfigurations()
+        private readonly LokiSinkConfigurations _configurations = new()
         {
             PropertiesAsLabels = ["label1", "label2"],
             HandleLogLevelAsLabel = true
@@ -21,20 +19,18 @@ namespace Serilog.Sinks.Loki.Tests
         {
             var comparer = new LokiLogEventComparer(_configurations);
             Serilog.Log.Logger.Information("");
-            var logEvent1 = new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("test 123", []), new List<LogEventProperty>()
-            {
+            var logEvent1 = new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("test 123", []),
+            [
                 new LogEventProperty("label1", new ScalarValue("value1")),
                 new LogEventProperty("label2", new ScalarValue("value2"))
-            });
+            ]);
 
-            var logEvent2 = new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("", []), new List<LogEventProperty>()
-            {
+            var logEvent2 = new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("", []),
+            [
                 new LogEventProperty("label2", new ScalarValue("value2")),
                 new LogEventProperty("label3", new ScalarValue("value3")),
                 new LogEventProperty("label1", new ScalarValue("value1")),
-            });
-            var m = logEvent1.RenderMessage();
-
+            ]);
             Assert.True(comparer.Equals(logEvent1, logEvent2));
         }
 
@@ -48,18 +44,18 @@ namespace Serilog.Sinks.Loki.Tests
         {
             var comparer = new LokiLogEventComparer(_configurations);
 
-            var logEvent1 = new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("", []), new List<LogEventProperty>()
-            {
+            var logEvent1 = new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("", []),
+            [
                 new LogEventProperty("label1", new ScalarValue("value1")),
                 new LogEventProperty("label2", new ScalarValue("value2")),
 
-            });
+            ]);
 
-            var logEvent2 = new LogEvent(DateTimeOffset.Now, secondLogLevel, null, new MessageTemplate("", []), new List<LogEventProperty>()
-            {
+            var logEvent2 = new LogEvent(DateTimeOffset.Now, secondLogLevel, null, new MessageTemplate("", []),
+            [
                 new LogEventProperty("label1", new ScalarValue(secondValue1)),
                 new LogEventProperty("label2", new ScalarValue(secondValue2))
-            });
+            ]);
 
             Assert.False(comparer.Equals(logEvent1, logEvent2));
         }
